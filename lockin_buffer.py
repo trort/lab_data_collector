@@ -4,7 +4,7 @@ import visa
 
 FILENAME = "buffer.txt"
 output = open(FILENAME,"w");
-LIA1 = visa.instrument("GPIB0::12");
+LIA1 = visa.instrument("GPIB0::11");
 
 def TakeData():
     t0 = time.clock();
@@ -15,10 +15,11 @@ def TakeData():
     t = time.clock() - t0;
     result += "Scan started at t = " + str(t+0.5) + "\n";
 
-    time.sleep(30); #30s
+    time.sleep(1); #30s
     LIA1.write("PAUS"); #pause
     t = time.clock() - t0;
     result += "Scan ended at t = " + str(t) + "\n";
+    LIA1.ask("SPTS ?");
     num = LIA1.ask("SPTS ?"); #number of points
     result += "There are " + num + " points\n";
     CH1 = LIA1.ask_for_values("TRCA ? 1,0," + num);

@@ -4,18 +4,20 @@ import visa
 import numpy as np
 
 FILENAME = "sweep.txt";
-output = open(FILENAME,"w");
+I_LIMIT = 0.0001;
 device = visa.instrument("GPIB0::14");
 START = -2;
 END = 2;
-POINTS = 100;
+STEP = 0.1;
+INTERVAL = 0.5; #in sec
 #lockin = visa.instrument("GPIB0::8");
 
+output = open(FILENAME,"w");
 t0 = time.clock();
 
 def init():
-    device.write("smua.reset()");
-    device.write("smua.source.limiti = 0.0001");
+    #device.write("smua.reset()");
+    device.write("smua.source.limiti = " + str(I_LIMIT));
 
 def set_voltage(v):
     device.write("smua.source.levelv = " + str(v));
@@ -30,9 +32,11 @@ def End():
     output.close();
     print "Program done!"
 
-for i in np.linspace(START,END,POINTS,endpoint=True):
+Init();
+
+for i in np.linspace(START, END, abs(END - START)/STEP + 1, endpoint=True):
     set_voltage(i);
-    time.sleep(0.5);
+    time.sleep(INTERVAL);
     read_voltage(i);
 
 End();
