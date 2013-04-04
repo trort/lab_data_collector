@@ -4,7 +4,7 @@ import visa
 
 FILENAME = "buffer.txt"
 output = open(FILENAME,"w");
-LIA1 = visa.instrument("GPIB0::8");
+LIA1 = visa.instrument("GPIB0::12");
 
 def TakeData():
     t0 = time.clock();
