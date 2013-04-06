@@ -16,7 +16,7 @@ def TakeData():
     t = time.clock() - t0;
     result += "Scan started at t = " + str(t) + "\n";
 
-    time.sleep(5); #30s max
+    time.sleep(0.5); #32s max
     LIA1.write("PAUS"); #pause
     t = time.clock() - t0;
     result += "Scan ended at t = " + str(t) + "\n";
@@ -26,32 +26,43 @@ def TakeData():
     t = time.clock() - t0;
     result += "Transfer started at t = " + str(t) + "\n";
 
+    #LIA1.term_chars = "\0";
+    CH1 = LIA1.ask_for_values("TRCA ? 1,0," + num);
+    CH2 = LIA1.ask_for_values("TRCA ? 2,0," + num);
     LIA1.values_format = visa.single;
     BIN1 = LIA1.ask("TRCL ? 1,0," + num);
     BIN2 = LIA1.ask("TRCL ? 2,0," + num);
     t = time.clock() - t0;
     result += "Transfer ended at t = " + str(t) + "\n";
-    
+
     BIN1 = list(BIN1);
     BIN2 = list(BIN2);
+    CONV1 = list(CH1);
+    CONV2 = list(CH2);
+    if len(BIN1) != 4*int(num) or len(BIN2) != 4*int(num):
+        print "ERROR in num!" + num + "\t" + str(len(BIN1));
+        
     for i in range(0,int(num)):
         mantissa = ord(BIN1[4*i+1])*256+ord(BIN1[4*i]);
         if mantissa >= 32768:
             mantissa -= 65536;
-        CONV1 = math.ldexp(mantissa, ord(BIN1[4*i+2])-124);
+        CONV1[i] = math.ldexp(mantissa, ord(BIN1[4*i+2])-124);
 
         mantissa = ord(BIN2[4*i+1])*256+ord(BIN2[4*i]);
         if mantissa >= 32768:
             mantissa -= 65536;
-        CONV2 = math.ldexp(mantissa, ord(BIN2[4*i+2])-124);
+        CONV2[i] = math.ldexp(mantissa, ord(BIN2[4*i+2])-124);
             
-        result += str(CONV1) + "\t" + str(CONV2) + "\n";
+        show = str(CH1[i]) + "\t" + str(CONV1[i]) + \
+               "\t" + str(CH2[i]) + "\t" + str(CONV2[i]);
+        print show;
+        result += show + "\n";
 
     t = time.clock() - t0;
     result += "Evrything ended at t = " + str(t) + "\n";
 
     output.write(result);
-    print result;
+    #print result;
 
 def Init():
     LIA1.write("REST"); #reset
@@ -76,4 +87,3 @@ def End():
 Init();
 TakeData();
 End();
-    

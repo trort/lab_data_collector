@@ -1,2 +1,2 @@
 Based on Enthought Python and PyVisa
-Also require NI Labview library to run
+Visa library typically comes with GPIB card driver
