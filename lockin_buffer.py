@@ -5,7 +5,7 @@ import math
 
 FILENAME = "buffer.txt"
 output = open(FILENAME,"w");
-LIA1 = visa.instrument("GPIB0::10",values_format = visa.ascii);
+LIA1 = visa.instrument("GPIB0::12",values_format = visa.ascii);
 
 def TakeData():
     t0 = time.clock();
