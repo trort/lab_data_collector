@@ -1,0 +1,22 @@
+// this is a lib of control strings ever used in previous programs
+// only supports devices ever existed in our lab...
+
+*****Keithley 2612 sourcemeter*****
+// smua stands for channel A
+"smua.source.limiti = " + str(I_LIMIT)		// set current limit
+"smua.source.levelv = " + str(v)		// set voltage level
+"print(smua.measure.i())"			// measure current
+
+*****SRS 830 lock-in*****
+"OUTP ? 1"					// read channel 1
+"OUTP ? 2"					// read channel 2
+// for using of the buffer, check "locking_buffer.py"
+
+*****Keithley 2400 sourcemeter*****
+":SOUR:FUNC CURR"				// set as current source
+":SENS:VOLT:PROT " + str(V_LIMIT)		// set voltage limit
+":SOUR:CURR:LEV " + str(I_LEVEL)		// set current level
+
+*****Keithley 2000 multimeter*****
+":CONF:RES"					// set as 2 wire Ohm meter
+":READ?"					// get screen reading
