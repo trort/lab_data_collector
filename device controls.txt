@@ -20,3 +20,7 @@
 *****Keithley 2000 multimeter*****
 ":CONF:RES"					// set as 2 wire Ohm meter
 ":READ?"					// get screen reading
+
+*****Keithley 230 voltage source*****
+"I" + str(I_LIMIT) + "X"		// set current limit
+"V" + str(v) + "X"		// set voltage level
