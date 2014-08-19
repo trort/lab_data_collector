@@ -19,6 +19,11 @@
 
 *****Keithley 2000 multimeter*****
 ":CONF:RES"					// set as 2 wire Ohm meter
+":CONF:FRES"					// set as 4 wire Ohm meter
+":CONF:VOLT:DC"					// set as DC voltage meter
+":CONF:CURR:AC"					// set as AC current meter
+":CONF:FREQ"					// set as frequency meter
+":CONF:TEMP"					// set as temperature meter
 ":READ?"					// get screen reading
 
 *****Keithley 230 voltage source*****
