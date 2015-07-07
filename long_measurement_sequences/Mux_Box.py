@@ -43,9 +43,9 @@ class Mux_Box:
         
         ## adjust range
         sense_range = RANGE_TABLE[self.sensitivity[idx]]
-        if abs(float(a)) > 0.95*sense_range:
+        if abs(float(a)) > 0.95*sense_range and self.sensitivity[idx] < 26:
             self.sensitivity[idx] += 1
-        elif abs(float(a)) < 0.3*sense_range:
+        elif abs(float(a)) < 0.3*sense_range and self.sensitivity[idx] > 0:
             self.sensitivity[idx] -= 1
         
         return line
@@ -59,10 +59,10 @@ class Mux_Box:
             sense_range = RANGE_TABLE[sense]
             time.sleep(self.wait)
             value = abs(float(self.device.ask('OUTP?1')))
-            if value > 0.95*sense_range:
+            if value > 0.95*sense_range and sense < 26:
                 sense += 1
                 self.device.write('SENS %i' % sense)
-            elif value < 0.3*sense_range:
+            elif value < 0.3*sense_range and sense > 0:
                 sense -= 1
                 self.device.write('SENS %i' % sense)
             else:

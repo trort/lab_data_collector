@@ -17,8 +17,7 @@ class fast_test:
         self.output = open(FILENAME,'a')
         self.output.write('t\tCH1\ttimestamp\n')
         self.t0 = time.clock();
-        with open('in_fast_mode.ini','w') as config_file:
-            config_file.write(str(self.sample_no))
+        open('in_fast_mode.ini','w').write(str(self.sample_no))
         logging.basicConfig(filename = 'fast_test_errors.log')
 
     def do_one_measurement(self):
@@ -45,8 +44,7 @@ class fast_test:
         print 'Wrapping up fast measurement...'
         self.output.flush()
         self.output.close()
-        with open('in_fast_mode.ini','w') as config_file:
-            config_file.write('0')
+        open('in_fast_mode.ini','w').write('0')
 
 if __name__ == "__main__":
     test = fast_test(2, "GPIB1::9::INSTR")
