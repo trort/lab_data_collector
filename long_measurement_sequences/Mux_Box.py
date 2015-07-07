@@ -8,33 +8,25 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
                20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1]
 
 class Mux_Box:
-    def __init__(self, device, interval = 30, stablize_time = 3):
+    def __init__(self, device, interval = 60, stablize_time = 3):
         self.device = device
         self.sensitivity = {}
         self.wait = stablize_time # in sec
         self.interval = interval
         self.next_call = {}
         self.last_sense = -1
-        self.idx_to_ignore = 0
         
     def Set_Sample(self, idx):
         for i in range(4):
             self.device.write("AUXV %i,%.3f" % (i+1, 5 if (idx-1) & (1<<i) else 0))
         # change range
-        try:
-            config_file = open('in_fast_mode.ini','r')
-            self.idx_to_ignore = int(config_file.readline())
-            config_file.close()
-        except:
-            pass
-        if idx != self.idx_to_ignore:
-            if idx in self.sensitivity:
-                if self.last_sense != self.sensitivity[idx]:
-                    self.device.write('SENS %i' % self.sensitivity[idx])
-                    self.last_sense = self.sensitivity[idx]
-                time.sleep(self.wait)
-            else:
-                self.sensitivity[idx] = self.find_range()
+        if idx in self.sensitivity:
+            if self.last_sense != self.sensitivity[idx]:
+                self.device.write('SENS %i' % self.sensitivity[idx])
+                self.last_sense = self.sensitivity[idx]
+            time.sleep(self.wait)
+        else:
+            self.sensitivity[idx] = self.find_range()
         
     def Read(self, idx):
         # set delay time between points
@@ -50,12 +42,12 @@ class Mux_Box:
         line = a + "\t" + b
         
         ## adjust range
-        if idx != self.idx_to_ignore:
-            sense_range = RANGE_TABLE[self.sensitivity[idx]]
-            if abs(float(a)) > 0.95*sense_range:
-                self.sensitivity[idx] += 1
-            elif abs(float(a)) < 0.3*sense_range:
-                self.sensitivity[idx] -= 1
+        sense_range = RANGE_TABLE[self.sensitivity[idx]]
+        if abs(float(a)) > 0.95*sense_range:
+            self.sensitivity[idx] += 1
+        elif abs(float(a)) < 0.3*sense_range:
+            self.sensitivity[idx] -= 1
+        
         return line
 
     def find_range(self):

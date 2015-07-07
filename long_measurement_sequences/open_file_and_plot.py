@@ -11,6 +11,7 @@ file_path = tkFileDialog.askopenfilename()
 x_data = []
 y_data = []
 with open(file_path,'r') as f:
+    f.readline()
     for line in f:
         items = line.split()
         time = float(items[0])

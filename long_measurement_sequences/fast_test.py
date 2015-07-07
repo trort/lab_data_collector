@@ -1,42 +1,54 @@
 from datetime import datetime
 import time
 import visa
+import logging
 
-### basic parameters ###
-sample_no = 2
-TESTNAME = "longlong_fast"
-INTERVAL = 0 #in sec
-rm = visa.ResourceManager();
-lockin = rm.open_resource("GPIB1::9::INSTR");
+class fast_test:
+    def __init__(self, sample, lock_in_addr, INTERVAL = 0, testname = 'longlong_fast'):
+        self.sample_no = sample
+        self.TESTNAME = testname
+        self.interval = INTERVAL #in sec
+        rm = visa.ResourceManager();
+        self.lockin = rm.open_resource(lock_in_addr);
 
-### initialize ###
-FILENAME = ('%s_sample%i_%s.txt' % (TESTNAME, sample_no, str(datetime.now()).replace(':','-')))
-output = open(FILENAME,'a')
-t0 = time.clock();
-with open('in_fast_mode.ini','w') as config_file:
-    config_file.write(str(sample_no))
+    def initialize(self):
+        print 'Initializing fast measurement...'
+        FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
+        self.output = open(FILENAME,'a')
+        self.output.write('t\tCH1\ttimestamp\n')
+        self.t0 = time.clock();
+        with open('in_fast_mode.ini','w') as config_file:
+            config_file.write(str(self.sample_no))
+        logging.basicConfig(filename = 'fast_test_errors.log')
 
-### make one measurement ###
-def do_measurement(i):
-    t = float(time.clock()-t0)
-    result = lockin.ask("OUTP?1").strip()
-    line = str(t) + "\t" + result
-    return line
+    def do_one_measurement(self):
+        t = float(time.clock()-self.t0)
+        result = self.lockin.ask("OUTP?1").strip()
+        line = str(t) + "\t" + result
+        return line
 
-### main loop ###
-next_call = time.time()
-while True:
-    try:
-        line = do_measurement(1)
-        print line
-        output.write(line + "\t" + str(datetime.now()) + '\n')
-        next_call = max(next_call + INTERVAL, time.time())
-        time.sleep(max(0, next_call - time.time()))
-    except:  # stop with ^C or close window
-        break
+    def main_test_loop(self):
+        print 'Fast measurement running...'
+        next_call = time.time()
+        while True:
+            try:
+                line = self.do_one_measurement()
+                print line
+                self.output.write(line + "\t" + str(datetime.now()) + '\n')
+                next_call = max(next_call + self.interval, time.time())
+                time.sleep(max(0, next_call - time.time()))
+            except:  # stop with ^C or close window
+                self.wrap_up()
+                logging.exception('')
 
-### wrap up ###
-output.flush()
-output.close()
-with open('in_fast_mode.ini','w') as config_file:
-    config_file.write('0')
+    def wrap_up(self):
+        print 'Wrapping up fast measurement...'
+        self.output.flush()
+        self.output.close()
+        with open('in_fast_mode.ini','w') as config_file:
+            config_file.write('0')
+
+if __name__ == "__main__":
+    test = fast_test(2, "GPIB1::9::INSTR")
+    test.initialize()
+    test.main_test_loop()
