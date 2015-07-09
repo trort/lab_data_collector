@@ -1,16 +1,9 @@
 import Tkinter
+import ttk
 import time
 import threading
 
-def MyThread(window):
-    n = 0
-    while True:
-        window.text.insert(Tkinter.END, window.entryVariable.get()+str(n)+" (You clicked the button)\n")
-        n += 1
-        time.sleep(0.1)
-        window.text.delete("1.0","end -20 lines")
-        if n >= 30:
-            pass#break
+import fast_test
 
 class fast_window(Tkinter.Tk):
     def __init__(self,parent):
@@ -19,46 +12,66 @@ class fast_window(Tkinter.Tk):
         self.initialize()
 
     def initialize(self):
+        # GUI part
         self.grid()
         
-        self.text = Tkinter.Text(self,undo = False,wrap=Tkinter.NONE)
-        self.text.grid(column=0,row=0,columnspan=2,rowspan=5,sticky='EW')
+        self.text = Tkinter.Text(self, undo = False, wrap='none', state='disabled',
+                                 width = 80, height = 22)
+        self.text.grid(column=0,row=0,columnspan=3,rowspan=5,sticky='EW')
         
-        self.entryVariable = Tkinter.StringVar()
-        self.entry = Tkinter.Entry(self,textvariable=self.entryVariable)
-        self.entry.grid(column=0,row=5,sticky='EW')
-        self.entry.bind("<Return>", self.OnPressEnter)
-        self.entryVariable.set(u"Enter text here.")
+        comboboxLabel = Tkinter.Label(self, text='Select fast mode sample:',anchor='e')
+        comboboxLabel.grid(column=0,row=5)
         
-        button = Tkinter.Button(self,text=u"Infinite add",command=self.OnButtonClick)
-        button.grid(column=1,row=5)
+        self.comboboxVariable = Tkinter.StringVar()
+        self.combobox = ttk.Combobox(self, textvariable=self.comboboxVariable, state='readonly')
+        self.combobox.grid(column=1,row=5,sticky='EW')
+        self.combobox.bind('<<ComboboxSelected>>', self.OnSelectCombobox)
+        self.combobox['values'] = ('0', '1', '2', '3', '4')
+        self.comboboxVariable.set('0')
+        
+        self.buttonVariable = Tkinter.StringVar()
+        self.button = ttk.Button(self,textvariable=self.buttonVariable,command=self.OnButtonClick)
+        self.button.grid(column=2,row=5)
+        self.buttonVariable.set('START')
         
         self.labelVariable = Tkinter.StringVar()
         label = Tkinter.Label(self,textvariable=self.labelVariable,
                               anchor="w",fg="white",bg="blue")
-        label.grid(column=0,row=6,columnspan=2,sticky='EW')
+        label.grid(column=0,row=6,columnspan=3,sticky='EW')
         self.labelVariable.set(u"Hello !")
         
         self.grid_columnconfigure(0,weight=1)
         self.grid_rowconfigure(0,weight=1)
-        self.resizable(True,False)
+        self.resizable(False,False)
         self.update()
         self.geometry(self.geometry())
-        self.entry.focus_set()
-        self.entry.selection_range(0, Tkinter.END)
+        
+        self.fast_test = fast_test.fast_test(0, "GPIB1::9::INSTR", INTERVAL = 1,
+                                             print_ch = 'Tk', Tk_window  = self)
+        self.fast_running = False
         
     def OnButtonClick(self):
-        self.labelVariable.set(self.entryVariable.get()+" (You clicked the button)")
-        textThread = threading.Thread(target = MyThread, args = (self,))
-        textThread.start()
-        self.entry.focus_set()
-        self.entry.selection_range(0, Tkinter.END)
-
-    def OnPressEnter(self,event):
-        self.labelVariable.set(self.entryVariable.get()+" (You pressed ENTER)")
-        self.text.insert(Tkinter.END, self.entryVariable.get()+" (You pressed ENTER)\n")
-        self.entry.focus_set()
-        self.entry.selection_range(0, Tkinter.END)
+        self.button.state(['disabled'])
+        if not self.fast_running: # not running, then start
+            self.fast_test._to_stop = False
+            self.fast_test.sample_no = int(self.comboboxVariable.get())
+            self.fast_test.initialize()
+            self.test_thread = threading.Thread(target = self.fast_test.main_test_loop)
+            self.test_thread.start()
+            self.fast_running = True
+            self.buttonVariable.set('STOP')
+            self.combobox.state(['disabled'])
+        else: # already running, then stop
+            self.fast_test._to_stop = True
+            self.test_thread.join()
+            self.fast_test.wrap_up()
+            self.fast_running = False
+            self.buttonVariable.set('START')
+            self.combobox.state(['!disabled'])
+        self.button.state(['!disabled'])
+        
+    def OnSelectCombobox(self,event):
+        pass
 
 if __name__ == "__main__":
     app = fast_window(None)
