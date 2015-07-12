@@ -26,13 +26,19 @@ class fast_test:
         self.output.write('t\tCH1\ttimestamp\n')
         self.t0 = time.clock();
         open('in_fast_mode.ini','w').write(str(self.sample_no))
-        logging.basicConfig(filename = 'fast_test_errors.log')
+        logging.basicConfig(filename = 'fast_test_errors.log', level=logging.ERROR)
 
     def do_one_measurement(self):
         t = float(time.clock()-self.t0)
         result = self.lockin.ask("OUTP?1").strip()
         line = str(t) + "\t" + result
-        return line
+        if self.print_ch == 'console': print line
+        elif self.print_ch == 'Tk':
+            self.window.text['state'] = 'normal'
+            self.window.text.insert('end', line + '\n')
+            self.window.text.delete('1.0', 'end -20 lines')
+            self.window.text['state'] = 'disabled'
+        self.output.write(line + "\t" + str(datetime.now()) + '\n')
 
     def main_test_loop(self):
         if self.print_ch == 'console':
@@ -42,19 +48,13 @@ class fast_test:
         next_call = time.time()
         while not self._to_stop:
             try:
-                line = self.do_one_measurement()
-                if self.print_ch == 'console': print line
-                elif self.print_ch == 'Tk':
-                    self.window.text['state'] = 'normal'
-                    self.window.text.insert('end', line + '\n')
-                    self.window.text.delete('1.0', 'end -20 lines')
-                    self.window.text['state'] = 'disabled'
-                self.output.write(line + "\t" + str(datetime.now()) + '\n')
+                self.do_one_measurement()
                 next_call = max(next_call + self.interval, time.time())
                 time.sleep(max(0, next_call - time.time()))
             except:  # stop with ^C or close window
-                self.wrap_up()
-                logging.exception('')
+                self._to_stop = True
+                logging.exception('Stopped when trying to measure at %s' % str(datetime.now()))
+        self.wrap_up()
 
     def wrap_up(self):
         if self.print_ch == 'console':
@@ -70,4 +70,5 @@ class fast_test:
 if __name__ == "__main__":
     test = fast_test(2, "GPIB1::9::INSTR", INTERVAL = 0.2)
     test.initialize()
+    test._to_stop = False
     test.main_test_loop()

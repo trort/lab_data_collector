@@ -2,6 +2,7 @@ import Tkinter
 import ttk
 import time
 import threading
+import logging
 
 import fast_test
 
@@ -46,6 +47,8 @@ class fast_window(Tkinter.Tk):
         self.update()
         self.geometry(self.geometry())
         
+        logging.basicConfig(filename = 'window_errors.log', level=logging.ERROR)
+        
         self.fast_test = fast_test.fast_test(0, "GPIB1::9::INSTR", INTERVAL = 1,
                                              print_ch = 'Tk', Tk_window  = self)
         self.fast_running = False
@@ -64,7 +67,6 @@ class fast_window(Tkinter.Tk):
         else: # already running, then stop
             self.fast_test._to_stop = True
             self.test_thread.join()
-            self.fast_test.wrap_up()
             self.fast_running = False
             self.buttonVariable.set('START')
             self.combobox.state(['!disabled'])

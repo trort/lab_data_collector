@@ -29,14 +29,6 @@ class Mux_Box:
             self.sensitivity[idx] = self.find_range()
         
     def Read(self, idx):
-        # set delay time between points
-        if idx in self.next_call:
-            time.sleep(max(0, self.next_call[idx] - time.time()))
-        else:
-            #time.sleep(self.wait)
-            self.next_call[idx] = time.time()
-        self.next_call[idx] = max(self.next_call[idx] + self.interval, time.time())
-        
         # take data
         [a,b] = self.device.ask("SNAP?1,2").strip().split(',')
         line = a + "\t" + b
