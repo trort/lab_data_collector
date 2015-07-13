@@ -8,12 +8,11 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
                20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1]
 
 class Mux_Box:
-    def __init__(self, device, interval = 60, stablize_time = 3):
-        self.device = device
+    def __init__(self, device_addr, stablize_time = 3):
+        rm = visa.ResourceManager();
+        self.device = rm.open_resource(device_addr);
         self.sensitivity = {}
         self.wait = stablize_time # in sec
-        self.interval = interval
-        self.next_call = {}
         self.last_sense = -1
         
     def Set_Sample(self, idx):

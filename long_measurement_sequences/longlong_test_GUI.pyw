@@ -8,7 +8,7 @@ import slow_test
 
 class fast_frame(Tkinter.Frame):
     def __init__(self, parent):
-        Tkinter.Frame.__init__(self, parent, width=500, height=800, bd=10)
+        Tkinter.Frame.__init__(self, parent, width=500, height=500, bd=10)
         self.parent = parent
         self.initialize()
 
@@ -77,7 +77,7 @@ class fast_frame(Tkinter.Frame):
         
 class slow_frame(Tkinter.Frame):
     def __init__(self, parent):
-        Tkinter.Frame.__init__(self, parent, width=500, height=800, bd=10)
+        Tkinter.Frame.__init__(self, parent, width=500, height=500, bd=10)
         self.parent = parent
         self.initialize()
 

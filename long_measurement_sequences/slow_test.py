@@ -1,6 +1,5 @@
 from datetime import datetime
 import time
-#import visa
 import logging
 import Tkinter
 import sched
@@ -11,11 +10,11 @@ class slow_test:
     def __init__(self, sample_list, lock_in_addr, INTERVAL = 60, WAIT_TIME = 3, testname = 'longlong_slow',
                  print_ch = 'console', Tk_output = None, Tk_status = None):
         self.name_prefix = testname
-        self.SAMPLES = sample_list # index of ALL samples to measure
-        #rm = visa.ResourceManager();
-        #lockin = rm.open_resource(lock_in_addr);
-        #self.box = Mux_Box(lockin,INTERVAL,WAIT_TIME)
-        self.interval = INTERVAL
+        self.sample_list = sample_list # index of ALL samples to measure
+        #self.box = Mux_Box(lock_in_addr,WAIT_TIME)
+        self.output_files = {}
+        self.intervals = [INTERVAL] * 17
+        
         self.print_ch = print_ch
         self.Tk_output = Tk_output
         self.Tk_status = Tk_status
@@ -26,17 +25,22 @@ class slow_test:
             print 'Initializing slow measurement...'
         elif self.print_ch == 'Tk':
             self.Tk_status.set('Initializing slow measurement...')
-        self.output_files = {}
-        for sample in self.SAMPLES:
-            filename = ('%s_sample%i_%s.txt' % (self.name_prefix, sample, str(datetime.now()).replace(':','-')))
-            self.output_files[sample] = open(filename,'a')
-            self.output_files[sample].write('t\tCH1\tCH2\ttimestamp\n')
-        #for sample in self.SAMPLES:
+        #for sample in self.sample_list:
             #self.box.Set_Sample(sample)
         self.t0 = time.clock();
         self.idx_to_ignore = 0
         self.scheduler = sched.scheduler(time.time, time.sleep)
         logging.basicConfig(filename = 'slow_test_errors.log', level=logging.ERROR)
+        
+    def add_one_sample(self, sample):
+        filename = ('%s_sample%i_%s.txt' % (self.name_prefix, sample, str(datetime.now()).replace(':','-')))
+        self.output_files[sample] = open(filename,'a')
+        self.output_files[sample].write('t\tCH1\tCH2\ttimestamp\n')
+        self.scheduler.enter(0,1,self.do_one_measurement,(sample,))
+    
+    def remove_one_sample(self, sample):
+        self.output_files[sample].flush()
+        self.output_files[sample].close()
     
     def do_one_measurement(self, sample):
         if self._to_stop:
@@ -44,7 +48,7 @@ class slow_test:
                 self.scheduler.cancel(self.scheduler.queue[0])
             return
         
-        self.scheduler.enter(self.interval, 1, self.do_one_measurement, (sample,))
+        self.scheduler.enter(self.intervals[sample], 1, self.do_one_measurement, (sample,))
         try:
             config_file = open('in_fast_mode.ini','r')
             self.idx_to_ignore = int(config_file.readline())
@@ -82,8 +86,9 @@ class slow_test:
         elif self.print_ch == 'Tk':
             self.Tk_status.set('Slow measurement running...')
             
-        for sample in self.SAMPLES:
-            self.scheduler.enter(0,1,self.do_one_measurement,(sample,))
+        for sample in self.sample_list:
+            self.add_one_sample(sample)
+        
         self.scheduler.run()
         self.wrap_up()
 
@@ -92,9 +97,8 @@ class slow_test:
             print 'Wrapping up slow measurement...'
         elif self.print_ch == 'Tk':
             self.Tk_status.set('Wrapping up slow measurement...')
-        for sample in self.SAMPLES:
-            self.output_files[sample].flush()
-            self.output_files[sample].close()
+        for sample in self.sample_list:
+            self.remove_one_sample(sample)
         if self.print_ch == 'Tk':
             self.Tk_status.set('Idle...')
 
