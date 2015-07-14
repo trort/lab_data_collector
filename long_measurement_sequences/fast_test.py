@@ -16,18 +16,18 @@ class fast_test:
         self.Tk_output = Tk_output
         self.Tk_status = Tk_status
         self._to_stop = True
+        logging.basicConfig(filename = 'fast_test_errors.log', level=logging.ERROR)
 
     def initialize(self):
         if self.print_ch == 'console':
             print 'Initializing fast measurement...'
+            open('in_fast_mode.ini','w').write(str(self.sample_no))
         elif self.print_ch == 'Tk':
             self.Tk_status.set('Initializing fast measurement...')
         FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
         self.output = open(FILENAME,'a')
         self.output.write('t\tCH1\ttimestamp\n')
         self.t0 = time.clock();
-        open('in_fast_mode.ini','w').write(str(self.sample_no))
-        logging.basicConfig(filename = 'fast_test_errors.log', level=logging.ERROR)
 
     def do_one_measurement(self):
         t = float(time.clock()-self.t0)
@@ -61,11 +61,11 @@ class fast_test:
     def wrap_up(self):
         if self.print_ch == 'console':
             print 'Wrapping up fast measurement...'
+            open('in_fast_mode.ini','w').write('0')
         elif self.print_ch == 'Tk':
             self.Tk_status.set('Wrapping up fast measurement...')
         self.output.flush()
         self.output.close()
-        open('in_fast_mode.ini','w').write('0')
         if self.print_ch == 'Tk':
             self.Tk_status.set('Idle...')
 
