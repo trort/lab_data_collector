@@ -89,13 +89,15 @@ class slow_test:
             elif self.print_ch == 'Tk':
                 self.Tk_output['state'] = 'normal'
                 self.Tk_output.insert('end', str(sample) + '\t' + line + '\n')
-                self.Tk_output.delete('1.0', 'end -20 lines')
+                self.Tk_output.delete('1.0', 'end -30 lines')
                 self.Tk_output['state'] = 'disabled'
             self.output_files[sample].write(line + '\t' + str(datetime.now()) + '\n')
             self.output_files[sample].flush()
         except:
             self._to_stop = True
             logging.exception('Stopped when trying to measure %i at %s' % (sample, datetime.now()))
+        if self.print_ch == 'Tk':
+            self.Tk_status.set('Slow measurement running...')
 
     def main_test_loop(self):
         if self.print_ch == 'console':

@@ -38,7 +38,7 @@ class fast_test:
         elif self.print_ch == 'Tk':
             self.Tk_output['state'] = 'normal'
             self.Tk_output.insert('end', line + '\n')
-            self.Tk_output.delete('1.0', 'end -20 lines')
+            self.Tk_output.delete('1.0', 'end -30 lines')
             self.Tk_output['state'] = 'disabled'
         self.output.write(line + "\t" + str(datetime.now()) + '\n')
 
