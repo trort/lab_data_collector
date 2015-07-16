@@ -23,13 +23,12 @@ class slow_test:
         self._to_stop = True
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
-        logging.basicConfig(filename = 'slow_test_errors.log', level=logging.ERROR)
 
     def initialize(self):
         if self.print_ch == 'console':
             print 'Initializing slow measurement...'
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Initializing slow measurement...')
+            self.Tk_status.write('Initializing slow measurement...')
         #for sample in self.sample_list:
             #self.box.Set_Sample(sample)
         self.t0 = time.clock();
@@ -78,7 +77,7 @@ class slow_test:
         if self.print_ch == 'console':
             print ('Measuring sample %i' % sample),
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Measuring sample %i' % sample)
+            self.Tk_status.write('Measuring sample %i' % sample)
         try:
             #self.box.Set_Sample(sample)
             #result = self.box.Read(sample)
@@ -87,23 +86,20 @@ class slow_test:
             line = str(time.clock()-self.t0) + "\t" + result
             if self.print_ch == 'console': print line
             elif self.print_ch == 'Tk':
-                self.Tk_output['state'] = 'normal'
-                self.Tk_output.insert('end', str(sample) + '\t' + line + '\n')
-                self.Tk_output.delete('1.0', 'end -30 lines')
-                self.Tk_output['state'] = 'disabled'
+                self.Tk_output.write(line)
             self.output_files[sample].write(line + '\t' + str(datetime.now()) + '\n')
             self.output_files[sample].flush()
         except:
             self._to_stop = True
             logging.exception('Stopped when trying to measure %i at %s' % (sample, datetime.now()))
         if self.print_ch == 'Tk':
-            self.Tk_status.set('Slow measurement running...')
+            self.Tk_status.write('Slow measurement running...')
 
     def main_test_loop(self):
         if self.print_ch == 'console':
             print 'Slow measurement running...'
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Slow measurement running...')
+            self.Tk_status.write('Slow measurement running...')
 
         for sample in self.sample_list:
             self.add_one_to_measurement(sample)
@@ -115,16 +111,17 @@ class slow_test:
         if self.print_ch == 'console':
             print 'Wrapping up slow measurement...'
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Wrapping up slow measurement...')
+            self.Tk_status.write('Wrapping up slow measurement...')
         for sample in range(1,17):
             if self.output_files[sample] != None:
                 self.output_files[sample].flush()
                 self.output_files[sample].close()
                 self.output_files[sample] = None
         if self.print_ch == 'Tk':
-            self.Tk_status.set('Idle...')
+            self.Tk_status.write('Idle...')
 
 if __name__ == "__main__":
+    logging.basicConfig(filename = 'slow_test_errors.log', level=logging.ERROR)
     test = slow_test(set([2,3,4]), "GPIB1::11::INSTR", INTERVAL = 15)
     test.initialize()
     test._to_stop = False

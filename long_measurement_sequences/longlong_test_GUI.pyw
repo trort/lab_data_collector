@@ -3,6 +3,7 @@ import ttk
 import threading
 import logging
 
+import thread_safe_tk_widgets
 import fast_test
 import slow_test
 
@@ -20,8 +21,8 @@ class fast_frame(Tkinter.Frame):
         captain_line = Tkinter.Label(self, text='Fast Measurement', font=("Helvetica", 16), anchor="w")
         captain_line.grid(column=0,row=0,columnspan=5)
         
-        self.output_box = Tkinter.Text(self, undo = False, wrap='none', state='disabled',
-                                 width = 60, height = 35)
+        self.output_box = thread_safe_tk_widgets.ThreadSafeText(self, undo = False, wrap='none',
+                          width = 60, height = 35)
         self.output_box.grid(column=0,row=1,columnspan=5,sticky='EW')
         
         initial_interval_Label = Tkinter.Label(self, text='Initial interval (sec):',anchor='e')
@@ -29,8 +30,8 @@ class fast_frame(Tkinter.Frame):
         self.initial_interval_Variable = Tkinter.StringVar()
         self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly')
         self.interval_select_box.grid(column=1,row=5,sticky='EW')
-        self.interval_select_box['values'] = ['0','0.05','0.1','0.3','1','3']
-        self.initial_interval_Variable.set('0')
+        self.interval_select_box['values'] = ['0.01','0.05','0.1','0.3','1','3']
+        self.initial_interval_Variable.set('0.01')
         
         sample_select_Label = Tkinter.Label(self, text='Fast mode sample:',anchor='e')
         sample_select_Label.grid(column=2,row=5)
@@ -44,16 +45,11 @@ class fast_frame(Tkinter.Frame):
         self.start_button.grid(column=4,row=5)
         self.start_button_Variable.set('START')
         
-        self.status_Variable = Tkinter.StringVar()
-        status_bar = Tkinter.Label(self,textvariable=self.status_Variable,
-                              anchor="w",fg="white",bg="blue")
-        status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
-        self.status_Variable.set(u"Hello !")
-        
-        logging.basicConfig(filename = 'window_errors.log', level=logging.ERROR)
+        self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
+        self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
         
         self.test = fast_test.fast_test(0, "GPIB1::9::INSTR",
-                                        print_ch = 'Tk', Tk_output = self.output_box, Tk_status = self.status_Variable)
+                                        print_ch = 'Tk', Tk_output = self.output_box, Tk_status = self.status_bar)
         self.is_running = False
         
     def OnButtonClick(self):
@@ -93,8 +89,8 @@ class slow_frame(Tkinter.Frame):
         captain_line = Tkinter.Label(self, text='Slow Measurement', font=("Helvetica", 16))
         captain_line.grid(column=0,row=0,columnspan=5)
         
-        self.output_box = Tkinter.Text(self, undo = False, wrap='none', state='disabled',
-                                 width = 60, height = 31)
+        self.output_box = thread_safe_tk_widgets.ThreadSafeText(self, undo = False, wrap='none',
+                          width = 60, height = 31)
         self.output_box.grid(column=0,row=1,columnspan=5,sticky='EW')
         
         initial_interval_Label = Tkinter.Label(self, text='Initial interval (sec):',anchor='e')
@@ -129,17 +125,12 @@ class slow_frame(Tkinter.Frame):
         self.start_button.grid(column=4,row=5,sticky='EWNS')
         self.start_button_Variable.set('START')
         
-        self.status_Variable = Tkinter.StringVar()
-        status_bar = Tkinter.Label(self,textvariable=self.status_Variable,
-                              anchor="w",fg="white",bg="blue")
-        status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
-        self.status_Variable.set(u"Hello !")
-        
-        logging.basicConfig(filename = 'window_errors.log', level=logging.ERROR)
+        self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
+        self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
 
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
         self.test = slow_test.slow_test(initial_sample_list, "GPIB1::11::INSTR", INTERVAL = 3, print_ch = 'Tk',
-                                        Tk_output = self.output_box, Tk_status = self.status_Variable, Tk_fast_sample = self.fast_sample_Variable)
+                                        Tk_output = self.output_box, Tk_status = self.status_bar, Tk_fast_sample = self.fast_sample_Variable)
         self.is_running = False
         
     def OnButtonClick(self):
@@ -192,7 +183,22 @@ class main_window(Tkinter.Tk):
         self.right_frame.grid(row=0, column=1)
         self.title('Multiplexer Measurements')
         self.resizable(False,False)
+        
+class test_window(Tkinter.Tk):
+    def __init__(self, parent):
+        Tkinter.Tk.__init__(self, parent)
+        self.parent = parent
+        self.initialize()
+        
+    def initialize(self):
+        self.fast_sample_Variable = Tkinter.StringVar()
+        self.left_frame = fast_frame(self,self.fast_sample_Variable)
+        self.left_frame.grid(row=0, column=0)
+        
+        self.title('test run')
+        self.resizable(False,False)
 
 if __name__ == "__main__":
+    logging.basicConfig(filename = 'window_errors.log', level=logging.WARNING)
     root = main_window(None)
     root.mainloop()

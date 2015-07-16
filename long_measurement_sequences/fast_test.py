@@ -2,7 +2,6 @@ from datetime import datetime
 import time
 #import visa
 import logging
-import Tkinter
 
 class fast_test:
     def __init__(self, sample, lock_in_addr, INTERVAL = 0, testname = 'longlong_fast',
@@ -16,14 +15,13 @@ class fast_test:
         self.Tk_output = Tk_output
         self.Tk_status = Tk_status
         self._to_stop = True
-        logging.basicConfig(filename = 'fast_test_errors.log', level=logging.ERROR)
 
     def initialize(self):
         if self.print_ch == 'console':
             print 'Initializing fast measurement...'
             open('in_fast_mode.ini','w').write(str(self.sample_no))
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Initializing fast measurement...')
+            self.Tk_status.write('Initializing fast measurement...')
         FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
         self.output = open(FILENAME,'a')
         self.output.write('t\tCH1\ttimestamp\n')
@@ -36,17 +34,14 @@ class fast_test:
         line = str(t) + "\t" + result
         if self.print_ch == 'console': print line
         elif self.print_ch == 'Tk':
-            self.Tk_output['state'] = 'normal'
-            self.Tk_output.insert('end', line + '\n')
-            self.Tk_output.delete('1.0', 'end -30 lines')
-            self.Tk_output['state'] = 'disabled'
+            self.Tk_output.write(line)
         self.output.write(line + "\t" + str(datetime.now()) + '\n')
 
     def main_test_loop(self):
         if self.print_ch == 'console':
             print 'Fast measurement running...'
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Fast measurement running...')
+            self.Tk_status.write('Fast measurement running...')
         next_call = time.time()
         while not self._to_stop:
             try:
@@ -63,13 +58,14 @@ class fast_test:
             print 'Wrapping up fast measurement...'
             open('in_fast_mode.ini','w').write('0')
         elif self.print_ch == 'Tk':
-            self.Tk_status.set('Wrapping up fast measurement...')
+            self.Tk_status.write('Wrapping up fast measurement...')
         self.output.flush()
         self.output.close()
         if self.print_ch == 'Tk':
-            self.Tk_status.set('Idle...')
+            self.Tk_status.write('Idle...')
 
 if __name__ == "__main__":
+    logging.basicConfig(filename = 'fast_test_errors.log', level=logging.ERROR)
     test = fast_test(2, "GPIB1::9::INSTR", INTERVAL = 0.2)
     test.initialize()
     test._to_stop = False
