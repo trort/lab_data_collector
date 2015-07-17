@@ -11,7 +11,7 @@ class fast_frame(Tkinter.Frame):
     def __init__(self, parent, fast_sample_Variable):
         Tkinter.Frame.__init__(self, parent, bd=10)
         self.parent = parent
-        self.fast_sample_Variable = fast_sample_Variable
+        self.parent_fast_sample_Variable = fast_sample_Variable
         self.initialize()
 
     def initialize(self):
@@ -35,10 +35,11 @@ class fast_frame(Tkinter.Frame):
         
         sample_select_Label = Tkinter.Label(self, text='Fast mode sample:',anchor='e')
         sample_select_Label.grid(column=2,row=5)
-        self.sample_select_box = ttk.Combobox(self, textvariable=self.fast_sample_Variable, state='readonly')
+        self.sample_select_Variable = Tkinter.StringVar()
+        self.sample_select_box = ttk.Combobox(self, textvariable=self.sample_select_Variable, state='readonly')
         self.sample_select_box.grid(column=3,row=5,sticky='EW')
         self.sample_select_box['values'] = [str(i) for i in range(17)]
-        self.fast_sample_Variable.set('0')
+        self.sample_select_Variable.set('0')
         
         self.start_button_Variable = Tkinter.StringVar()
         self.start_button = ttk.Button(self,textvariable=self.start_button_Variable,command=self.OnButtonClick)
@@ -48,38 +49,39 @@ class fast_frame(Tkinter.Frame):
         self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
         self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
         
-        self.test = fast_test.fast_test(0, "GPIB1::9::INSTR",
-                                        print_ch = 'Tk', Tk_output = self.output_box, Tk_status = self.status_bar)
+        # logic part
+        self.test = fast_test.fast_test(0, "GPIB1::9::INSTR", print_ch = 'Tk',
+                                        Tk_output = self.output_box, Tk_status = self.status_bar)
         self.is_running = False
         
     def OnButtonClick(self):
         self.start_button.state(['disabled'])
         if not self.is_running: # not running, then start
-            self.start_button_Variable.set('STOP')
-            self.sample_select_box.state(['disabled'])
-            self.interval_select_box.state(['disabled'])
-            self.is_running = True
-            self.test._to_stop = False
-            self.test.sample_no = int(self.fast_sample_Variable.get())
+            self.start_button_Variable.set('STOP') #1
+            self.sample_select_box.state(['disabled']) #2
+            self.interval_select_box.state(['disabled']) #3
+            self.is_running = True #4
+            self.test._to_stop = False #5
+            self.test.sample_no = int(self.sample_select_Variable.get())
+            self.parent_fast_sample_Variable.set(self.sample_select_Variable.get()) #6
             self.test.interval = float(self.initial_interval_Variable.get())
             self.test.initialize()
             self.test_thread = threading.Thread(target = self.test.main_test_loop)
             self.test_thread.start()
         else: # already running, then stop
-            self.test._to_stop = True
+            self.test._to_stop = True #5
             self.test_thread.join()
-            self.is_running = False
-            self.fast_sample_Variable.set('0')
-            self.start_button_Variable.set('START')
-            self.interval_select_box.state(['!disabled'])
-            self.sample_select_box.state(['!disabled'])
+            self.parent_fast_sample_Variable.set('0') #6
+            self.is_running = False #4
+            self.interval_select_box.state(['!disabled']) #3
+            self.sample_select_box.state(['!disabled']) #2
+            self.start_button_Variable.set('START') #1
         self.start_button.state(['!disabled'])
         
 class slow_frame(Tkinter.Frame):
-    def __init__(self, parent, fast_sample_Variable):
+    def __init__(self, parent):
         Tkinter.Frame.__init__(self, parent, bd=10)
         self.parent = parent
-        self.fast_sample_Variable = fast_sample_Variable
         self.initialize()
 
     def initialize(self):
@@ -98,7 +100,7 @@ class slow_frame(Tkinter.Frame):
         self.initial_interval_Variable = Tkinter.StringVar()
         self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly')
         self.interval_select_box.grid(column=1,row=4,sticky='EW')
-        self.interval_select_box['values'] = ['15','30','60','150','300']
+        self.interval_select_box['values'] = ['15','30','60','150','300','600']
         self.initial_interval_Variable.set('30')
         
         wait_time_Label = Tkinter.Label(self, text='Stabilize time (sec):',anchor='e')
@@ -127,32 +129,31 @@ class slow_frame(Tkinter.Frame):
         
         self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
         self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
-
+        
+        # logic part
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
-        self.test = slow_test.slow_test(initial_sample_list, "GPIB1::11::INSTR", INTERVAL = 3, print_ch = 'Tk',
-                                        Tk_output = self.output_box, Tk_status = self.status_bar, Tk_fast_sample = self.fast_sample_Variable)
+        self.test = slow_test.slow_test(initial_sample_list, "GPIB1::11::INSTR", print_ch = 'Tk',
+                                        Tk_output = self.output_box, Tk_status = self.status_bar)
+        self.wait_time_Variable.trace('w',self.OnWaitTimeChange)
+        self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)
         self.is_running = False
         
     def OnButtonClick(self):
         self.start_button.state(['disabled'])
         if not self.is_running: # not running, then start
-            self.start_button_Variable.set('STOP')
-            self.interval_select_box.state(['disabled'])
-            self.wait_time_select_box.state(['disabled'])
-            self.test._to_stop = False
+            self.start_button_Variable.set('STOP') #1
             self.test.interval = [float(self.initial_interval_Variable.get())] * 17
             #self.test.box.wait = float(self.wait_time_Variable.get())
+            self.test._to_stop = False #4
+            self.is_running = True #5
             self.test.initialize()
             self.test_thread = threading.Thread(target = self.test.main_test_loop)
             self.test_thread.start()
-            self.is_running = True
         else: # already running, then stop
-            self.test._to_stop = True
+            self.test._to_stop = True #4
             self.test_thread.join()
-            self.is_running = False
-            self.start_button_Variable.set('START')
-            self.interval_select_box.state(['!disabled'])
-            self.wait_time_select_box.state(['!disabled'])
+            self.is_running = False #5
+            self.start_button_Variable.set('START') #1
         self.start_button.state(['!disabled'])
     
     def OnSampleSelect(self):
@@ -169,6 +170,12 @@ class slow_frame(Tkinter.Frame):
         for child in self.sample_select_box.winfo_children():
             child.configure(state='normal')
             
+    def OnWaitTimeChange(self,*args):
+        self.test.wait_time = float(self.wait_time_Variable.get())
+        
+    def OnInitialInvervalChange(self,*args):
+        self.test.default_interval = float(self.initial_interval_Variable.get())
+            
 class main_window(Tkinter.Tk):
     def __init__(self, parent):
         Tkinter.Tk.__init__(self, parent)
@@ -179,24 +186,15 @@ class main_window(Tkinter.Tk):
         self.fast_sample_Variable = Tkinter.StringVar()
         self.left_frame = fast_frame(self,self.fast_sample_Variable)
         self.left_frame.grid(row=0, column=0)
-        self.right_frame = slow_frame(self,self.fast_sample_Variable)
+        self.right_frame = slow_frame(self)
         self.right_frame.grid(row=0, column=1)
         self.title('Multiplexer Measurements')
         self.resizable(False,False)
         
-class test_window(Tkinter.Tk):
-    def __init__(self, parent):
-        Tkinter.Tk.__init__(self, parent)
-        self.parent = parent
-        self.initialize()
+        self.fast_sample_Variable.trace('w',self.OnFastSampleChange)
         
-    def initialize(self):
-        self.fast_sample_Variable = Tkinter.StringVar()
-        self.left_frame = fast_frame(self,self.fast_sample_Variable)
-        self.left_frame.grid(row=0, column=0)
-        
-        self.title('test run')
-        self.resizable(False,False)
+    def OnFastSampleChange(self,*args):
+        self.right_frame.test.idx_to_ignore = int(self.fast_sample_Variable.get())
 
 if __name__ == "__main__":
     logging.basicConfig(filename = 'window_errors.log', level=logging.WARNING)

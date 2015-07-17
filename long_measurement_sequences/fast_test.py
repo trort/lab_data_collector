@@ -22,6 +22,7 @@ class fast_test:
             open('in_fast_mode.ini','w').write(str(self.sample_no))
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Initializing fast measurement...')
+            self.Tk_output.write('++++++++++++++++++++++++++++++++')
         FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
         self.output = open(FILENAME,'a')
         self.output.write('t\tCH1\ttimestamp\n')
@@ -31,11 +32,12 @@ class fast_test:
         t = float(time.clock()-self.t0)
         #result = self.lockin.ask("OUTP?1").strip()
         result = str(time.time())
-        line = str(t) + "\t" + result
+        t = str(time.clock()-self.t0)
+        timestamp = datetime.now()
+        line = "t = %s, v = %s (%s)" % (t,result,timestamp.time())
         if self.print_ch == 'console': print line
-        elif self.print_ch == 'Tk':
-            self.Tk_output.write(line)
-        self.output.write(line + "\t" + str(datetime.now()) + '\n')
+        elif self.print_ch == 'Tk': self.Tk_output.write(line)
+        self.output.write("%s\t%s\t%s\n" % (t,result,timestamp))
 
     def main_test_loop(self):
         if self.print_ch == 'console':
@@ -59,6 +61,7 @@ class fast_test:
             open('in_fast_mode.ini','w').write('0')
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Wrapping up fast measurement...')
+            self.Tk_output.write('===============================')
         self.output.flush()
         self.output.close()
         if self.print_ch == 'Tk':
