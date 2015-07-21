@@ -1,9 +1,13 @@
 from datetime import datetime
 import time
+from collections import deque
+import numpy
 import logging
 import sched
 
 #from Mux_Box import Mux_Box
+
+MAX_SLOW_INTERVAL = 60
 
 class slow_test:
     def __init__(self, sample_list, lock_in_addr, INTERVAL = 60, WAIT_TIME = 3, testname = 'longlong_slow',
@@ -22,6 +26,10 @@ class slow_test:
         self.Tk_output = Tk_output
         self.Tk_status = Tk_status
         self._to_stop = True
+        self._auto_tc = True
+        
+        self.time_queue = [deque()] * 17
+        self.result_queue = [deque()] *17
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -33,6 +41,9 @@ class slow_test:
             self.Tk_output.write('++++++++++++++++++++++++++++++++')
         #for sample in self.sample_list:
             #self.box.Set_Sample(sample)
+        for sample in range(1,17):
+            self.time_queue[sample].clear()
+            self.result_queue[sample].clear()
         self.t0 = time.clock();
         
     def add_one_to_measurement(self, sample):
@@ -51,9 +62,12 @@ class slow_test:
             self.scheduler.cancel(self.next_call[sample])
             self.next_call[sample] = None #3
         self.intervals[sample] = None #4
+        self.time_queue[sample].clear()
+        self.result_queue[sample].clear()
         self.sample_list.remove(sample) #1
     
     def do_one_measurement(self, sample):
+        # stop measurement
         if self._to_stop:
             if self.print_ch == 'console':
                 print 'Stopping slow measurement...'
@@ -66,11 +80,13 @@ class slow_test:
                     self.next_call[i] = None
             return
         
+        # check list
         if sample in self.sample_list:
             self.next_call[sample] = self.scheduler.enter(self.intervals[sample], 1, self.do_one_measurement, (sample,))
         else:
             self.next_call[sample] = None
-            
+        
+        # check whether to ignore
         if self.print_ch == 'console':
             try:
                 config_file = open('in_fast_mode.ini','r')
@@ -81,6 +97,8 @@ class slow_test:
         elif self.print_ch == 'Tk':
             pass # handled in the GUI logic
         if sample == self.idx_to_ignore:
+            self.time_queue[sample].clear()
+            self.result_queue[sample].clear()
             return
             
         # actually set and measure the sample
@@ -92,8 +110,8 @@ class slow_test:
             #self.box.Set_Sample(sample)
             #result = self.box.Read(sample)
             time.sleep(self.wait_time)
-            result = str(time.time())
-            t = str(time.clock()-self.t0)
+            result = float(time.time())
+            t = float(time.clock()-self.t0)
             timestamp = datetime.now()
             line = "Sample %i: t = %s, v = %s (%s)" % (sample,t,result,timestamp.time())
             if self.print_ch == 'console': print line
@@ -103,6 +121,19 @@ class slow_test:
         except:
             self._to_stop = True
             logging.exception('Stopped when trying to measure %i at %s' % (sample, datetime.now()))
+        
+        # auto_tc
+        self.time_queue[sample].append(t)
+        self.result_queue[sample].append(result)
+        if len(self.time_queue[sample]) > 5:
+            self.time_queue[sample].popleft()
+            self.result_queue[sample].popleft()
+            if self._auto_tc and self.intervals[sample] < MAX_SLOW_INTERVAL:
+                slope, intersect = numpy.polyfit(self.time_queue[sample],self.result_queue[sample],1)
+                new_interval = abs(result * 0.00001 / slope)
+                self.intervals[sample] = max(self.intervals[sample], min(new_interval,MAX_SLOW_INTERVAL))
+        
+        # wait for next
         if self.print_ch == 'Tk':
             self.Tk_status.write('Waiting for next query in queue...')
 
@@ -123,7 +154,6 @@ class slow_test:
             print 'Wrapping up slow measurement...'
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Wrapping up slow measurement...')
-            self.Tk_output.write('===============================')
         for sample in range(1,17):
             if self.output_files[sample] != None:
                 self.output_files[sample].flush()
@@ -131,6 +161,7 @@ class slow_test:
                 self.output_files[sample] = None #2
         if self.print_ch == 'Tk':
             self.Tk_status.write('Idle...')
+            self.Tk_output.write('===============================')
 
 if __name__ == "__main__":
     logging.basicConfig(filename = 'slow_test_errors.log', level=logging.ERROR)

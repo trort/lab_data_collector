@@ -19,16 +19,16 @@ class fast_frame(Tkinter.Frame):
         self.grid()
         
         captain_line = Tkinter.Label(self, text='Fast Measurement', font=("Helvetica", 16), anchor="w")
-        captain_line.grid(column=0,row=0,columnspan=5)
+        captain_line.grid(column=0,row=0,columnspan=10)
         
         self.output_box = thread_safe_tk_widgets.ThreadSafeText(self, undo = False, wrap='none',
-                          width = 60, height = 35)
-        self.output_box.grid(column=0,row=1,columnspan=5,sticky='EW')
+                          width = 60, height = 34)
+        self.output_box.grid(column=0,row=1,columnspan=10,sticky='EW')
         
         initial_interval_Label = Tkinter.Label(self, text='Initial interval (sec):',anchor='e')
         initial_interval_Label.grid(column=0,row=5)
         self.initial_interval_Variable = Tkinter.StringVar()
-        self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly')
+        self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly', width=10)
         self.interval_select_box.grid(column=1,row=5,sticky='EW')
         self.interval_select_box['values'] = ['0.01','0.05','0.1','0.3','1','3']
         self.initial_interval_Variable.set('0.01')
@@ -36,22 +36,28 @@ class fast_frame(Tkinter.Frame):
         sample_select_Label = Tkinter.Label(self, text='Fast mode sample:',anchor='e')
         sample_select_Label.grid(column=2,row=5)
         self.sample_select_Variable = Tkinter.StringVar()
-        self.sample_select_box = ttk.Combobox(self, textvariable=self.sample_select_Variable, state='readonly')
+        self.sample_select_box = ttk.Combobox(self, textvariable=self.sample_select_Variable, state='readonly', width=6)
         self.sample_select_box.grid(column=3,row=5,sticky='EW')
         self.sample_select_box['values'] = [str(i) for i in range(17)]
         self.sample_select_Variable.set('0')
         
+        self.auto_tc_Var = Tkinter.IntVar()
+        self.auto_tc_Var.set(1)
+        auto_tc_button = Tkinter.Checkbutton(self, text='Auto interval and frequency', variable=self.auto_tc_Var)
+        auto_tc_button.grid(column=0,row=6,columnspan=2,sticky='W')
+        
         self.start_button_Variable = Tkinter.StringVar()
         self.start_button = ttk.Button(self,textvariable=self.start_button_Variable,command=self.OnButtonClick)
-        self.start_button.grid(column=4,row=5)
+        self.start_button.grid(column=9,row=5,rowspan=2,sticky='EWNS')
         self.start_button_Variable.set('START')
         
         self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
-        self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
+        self.status_bar.grid(column=0,row=7,columnspan=10,sticky='EW')
         
         # logic part
         self.test = fast_test.fast_test(0, "GPIB1::9::INSTR", print_ch = 'Tk',
                                         Tk_output = self.output_box, Tk_status = self.status_bar)
+        self.auto_tc_Var.trace('w',self.OnAutoTcChange)
         self.is_running = False
         
     def OnButtonClick(self):
@@ -78,6 +84,9 @@ class fast_frame(Tkinter.Frame):
             self.start_button_Variable.set('START') #1
         self.start_button.state(['!disabled'])
         
+    def OnAutoTcChange(self,*args):
+        self.test._auto_tc = bool(self.auto_tc_Var.get())
+        
 class slow_frame(Tkinter.Frame):
     def __init__(self, parent):
         Tkinter.Frame.__init__(self, parent, bd=10)
@@ -89,16 +98,16 @@ class slow_frame(Tkinter.Frame):
         self.grid()
         
         captain_line = Tkinter.Label(self, text='Slow Measurement', font=("Helvetica", 16))
-        captain_line.grid(column=0,row=0,columnspan=5)
+        captain_line.grid(column=0,row=0,columnspan=10)
         
         self.output_box = thread_safe_tk_widgets.ThreadSafeText(self, undo = False, wrap='none',
                           width = 60, height = 31)
-        self.output_box.grid(column=0,row=1,columnspan=5,sticky='EW')
+        self.output_box.grid(column=0,row=1,columnspan=10,sticky='EW')
         
         initial_interval_Label = Tkinter.Label(self, text='Initial interval (sec):',anchor='e')
         initial_interval_Label.grid(column=0,row=4)
         self.initial_interval_Variable = Tkinter.StringVar()
-        self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly')
+        self.interval_select_box = ttk.Combobox(self, textvariable=self.initial_interval_Variable, state='readonly', width=10)
         self.interval_select_box.grid(column=1,row=4,sticky='EW')
         self.interval_select_box['values'] = ['15','30','60','150','300','600']
         self.initial_interval_Variable.set('30')
@@ -106,13 +115,13 @@ class slow_frame(Tkinter.Frame):
         wait_time_Label = Tkinter.Label(self, text='Stabilize time (sec):',anchor='e')
         wait_time_Label.grid(column=2,row=4)
         self.wait_time_Variable = Tkinter.StringVar()
-        self.wait_time_select_box = ttk.Combobox(self, textvariable=self.wait_time_Variable, state='readonly')
+        self.wait_time_select_box = ttk.Combobox(self, textvariable=self.wait_time_Variable, state='readonly', width=6)
         self.wait_time_select_box.grid(column=3,row=4,sticky='EW')
         self.wait_time_select_box['values'] = ['1','3','5','10','30']
         self.wait_time_Variable.set('3')
         
         self.sample_select_box = Tkinter.LabelFrame(self, text='Slow mode samples')
-        self.sample_select_box.grid(column=0,row=5,columnspan=4,sticky='W')
+        self.sample_select_box.grid(column=0,row=5,columnspan=3,sticky='W')
         
         self.selected_Var = [Tkinter.IntVar() for i in range(17)]
         for i in range(1,5):
@@ -121,14 +130,19 @@ class slow_frame(Tkinter.Frame):
         for i in range(1,17):
             select_buttons[i] = Tkinter.Checkbutton(self.sample_select_box, text=str(i), variable=self.selected_Var[i], command=self.OnSampleSelect)
             select_buttons[i].grid(column=(i-1)%8,row=(i-1)//8)
+
+        self.auto_tc_Var = Tkinter.IntVar()
+        self.auto_tc_Var.set(1)
+        auto_tc_button = Tkinter.Checkbutton(self, text='Auto interval', variable=self.auto_tc_Var)
+        auto_tc_button.grid(column=3,row=5,sticky='W')
         
         self.start_button_Variable = Tkinter.StringVar()
         self.start_button = ttk.Button(self,textvariable=self.start_button_Variable,command=self.OnButtonClick)
-        self.start_button.grid(column=4,row=5,sticky='EWNS')
+        self.start_button.grid(column=9,row=4,rowspan=2,sticky='EWNS')
         self.start_button_Variable.set('START')
         
         self.status_bar = thread_safe_tk_widgets.ThreadSafeLabel(self,text="Hello!",anchor="w",fg="white",bg="blue")
-        self.status_bar.grid(column=0,row=6,columnspan=5,sticky='EW')
+        self.status_bar.grid(column=0,row=6,columnspan=10,sticky='EW')
         
         # logic part
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
@@ -136,6 +150,7 @@ class slow_frame(Tkinter.Frame):
                                         Tk_output = self.output_box, Tk_status = self.status_bar)
         self.wait_time_Variable.trace('w',self.OnWaitTimeChange)
         self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)
+        self.auto_tc_Var.trace('w',self.OnAutoTcChange)
         self.is_running = False
         
     def OnButtonClick(self):
@@ -175,6 +190,9 @@ class slow_frame(Tkinter.Frame):
         
     def OnInitialInvervalChange(self,*args):
         self.test.default_interval = float(self.initial_interval_Variable.get())
+    
+    def OnAutoTcChange(self,*args):
+        self.test._auto_tc = bool(self.auto_tc_Var.get())
             
 class main_window(Tkinter.Tk):
     def __init__(self, parent):
