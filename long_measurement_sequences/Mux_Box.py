@@ -29,8 +29,8 @@ class Mux_Box:
         
     def Read(self, idx):
         # take data
-        [a,b] = self.device.ask("SNAP?1,2").strip().split(',')
-        line = a + "\t" + b
+        a,b = self.device.ask("SNAP?1,2").strip().split(',')
+        #line = a + "\t" + b
         
         ## adjust range
         sense_range = RANGE_TABLE[self.sensitivity[idx]]
@@ -39,7 +39,7 @@ class Mux_Box:
         elif abs(float(a)) < 0.3*sense_range and self.sensitivity[idx] > 0:
             self.sensitivity[idx] -= 1
         
-        return line
+        return float(a),float(b)
 
     def find_range(self):
         if self.last_sense == -1:

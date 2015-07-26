@@ -42,7 +42,7 @@ class fast_frame(Tkinter.Frame):
         self.sample_select_Variable.set('0')
         
         self.auto_tc_Var = Tkinter.IntVar()
-        self.auto_tc_Var.set(1)
+        self.auto_tc_Var.set(0)
         auto_tc_button = Tkinter.Checkbutton(self, text='Auto interval and frequency', variable=self.auto_tc_Var)
         auto_tc_button.grid(column=0,row=6,columnspan=2,sticky='W')
         
@@ -55,7 +55,7 @@ class fast_frame(Tkinter.Frame):
         self.status_bar.grid(column=0,row=7,columnspan=10,sticky='EW')
         
         # logic part
-        self.test = fast_test.fast_test(0, "GPIB1::9::INSTR", print_ch = 'Tk',
+        self.test = fast_test.fast_test(0, "GPIB0::9::INSTR", print_ch = 'Tk',
                                         Tk_output = self.output_box, Tk_status = self.status_bar)
         self.auto_tc_Var.trace('w',self.OnAutoTcChange)
         self.is_running = False
@@ -146,7 +146,7 @@ class slow_frame(Tkinter.Frame):
         
         # logic part
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
-        self.test = slow_test.slow_test(initial_sample_list, "GPIB1::11::INSTR", print_ch = 'Tk',
+        self.test = slow_test.slow_test(initial_sample_list, "GPIB0::11::INSTR", print_ch = 'Tk',
                                         Tk_output = self.output_box, Tk_status = self.status_bar)
         self.wait_time_Variable.trace('w',self.OnWaitTimeChange)
         self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)
@@ -158,7 +158,8 @@ class slow_frame(Tkinter.Frame):
         if not self.is_running: # not running, then start
             self.start_button_Variable.set('STOP') #1
             self.test.interval = [float(self.initial_interval_Variable.get())] * 17
-            #self.test.box.wait = float(self.wait_time_Variable.get())
+            self.test.box.wait = float(self.wait_time_Variable.get())
+            self.test.sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
             self.test._to_stop = False #4
             self.is_running = True #5
             self.test.initialize()
@@ -180,8 +181,10 @@ class slow_frame(Tkinter.Frame):
             remove_queue = self.test.sample_list - new_sample_list
             for sample in add_queue:
                 self.test.add_one_to_measurement(sample)
+                #self.output_box.write('add sample %i' % sample)
             for sample in remove_queue:
                 self.test.remove_one_from_measurement(sample)
+                #self.output_box.write('remove sample %i' % sample)
         for child in self.sample_select_box.winfo_children():
             child.configure(state='normal')
             

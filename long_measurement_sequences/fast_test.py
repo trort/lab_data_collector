@@ -1,6 +1,6 @@
 from datetime import datetime
 import time
-#import visa
+import visa
 from collections import deque
 import numpy
 import math
@@ -16,13 +16,13 @@ class fast_test:
         self.sample_no = sample
         self.TESTNAME = testname
         self.interval = INTERVAL #in sec
-        #rm = visa.ResourceManager();
-        #self.lockin = rm.open_resource(lock_in_addr);
+        rm = visa.ResourceManager();
+        self.lockin = rm.open_resource(lock_in_addr);
         self.print_ch = print_ch
         self.Tk_output = Tk_output
         self.Tk_status = Tk_status
         self._to_stop = True
-        self._auto_tc = True
+        self._auto_tc = False
         
         self.time_queue = deque()
         self.result_queue = deque()
@@ -36,37 +36,47 @@ class fast_test:
             self.Tk_output.write('++++++++++++++++++++++++++++++++')
         FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
         self.output = open(FILENAME,'a')
-        self.output.write('t\tCH1\tfreq\ttimestamp\n')
-        #self.freq = float(self.lockin.ask("FREQ?"))
-        self.freq = 37.0
+        self.output.write('t\tCH1\tCH2\tfreq\ttimestamp\n')
+        self.freq = float(self.lockin.ask("FREQ?"))
+        #self.freq = 37.0
         self.t0 = time.clock();
         
         self.time_queue.clear()
         self.result_queue.clear()
 
     def do_one_measurement(self):
+        if self.interval < 0.05:
+            result = self.lockin.ask("OUTP?1").strip()
+            CH1 = result
+            CH2 = 0
+        else:
+            result = self.lockin.ask("SNAP?1,2").strip()
+            CH1,CH2 = result.split(',')
         t = float(time.clock()-self.t0)
+        CH1 = float(CH1)
+        CH2 = float(CH2)
         #result = self.lockin.ask("OUTP?1").strip()
-        result = math.exp(-(t/1E4)**(0.5)) + 10
+        #result = math.exp(-(t/1E4)**(0.5)) + 10
         timestamp = datetime.now()
-        line = "t = %f, v = %f (%s)" % (t,result,timestamp.time())
+        line = "t = %f, v = %s (%s)" % (t,result,timestamp.time())
         if self.print_ch == 'console': print line
         elif self.print_ch == 'Tk': self.Tk_output.write(line)
-        self.output.write("%f\t%f\t%f\t%s\n" % (t,result,self.freq,timestamp))
+        self.output.write("%e\t%e\t%e\t%f\t%s\n" % (t,CH1,CH2,self.freq,timestamp))
         
         self.time_queue.append(t)
-        self.result_queue.append(result)
+        self.result_queue.append(CH1)
         if len(self.time_queue) > 5:
             self.time_queue.popleft()
             self.result_queue.popleft()
             if self._auto_tc and self.interval < MAX_FAST_INTERVAL:
                 slope, intersect = numpy.polyfit(self.time_queue,self.result_queue,1)
-                new_interval = abs(result * 0.00001 / slope)
-                self.interval = max(self.interval, min(new_interval,MAX_FAST_INTERVAL))
+                new_interval = min(abs(CH1 * 0.00001 / slope),MAX_FAST_INTERVAL)
+                if new_interval > self.interval:
+                    self.interval = min(self.interval * 1.02, new_interval)
                 new_freq = max(5 / self.interval, MAX_FAST_FREQ)
                 if new_freq < self.freq: #change freq
                     self.freq = max(self.freq * 0.98, new_freq)
-                    #self.device.write("FREQ %f" % self.freq)
+                    self.lockin.write("FREQ %f" % self.freq)
             
                 self.Tk_status.write('interval is %f, freq is %f' % (self.interval,self.freq))
 
@@ -94,9 +104,10 @@ class fast_test:
             self.Tk_status.write('Wrapping up fast measurement...')
         
         # last point at slow frequency
-        #self.device.write('FREQ %f' % SLOW_FREQ)
+        self.lockin.write('FREQ %f' % SLOW_FREQ)
         time.sleep(6/SLOW_FREQ)
         self.do_one_measurement()
+        self.lockin.write('FREQ %f' % self.freq)
         
         self.output.flush()
         self.output.close()

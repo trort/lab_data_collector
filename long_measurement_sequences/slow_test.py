@@ -5,7 +5,7 @@ import numpy
 import logging
 import sched
 
-#from Mux_Box import Mux_Box
+from Mux_Box import Mux_Box
 
 MAX_SLOW_INTERVAL = 60
 
@@ -16,7 +16,7 @@ class slow_test:
         self.sample_list = set(sample_list)
         self.wait_time = WAIT_TIME
         self.default_interval = INTERVAL
-        #self.box = Mux_Box(lock_in_addr,WAIT_TIME)
+        self.box = Mux_Box(lock_in_addr,WAIT_TIME)
         self.output_files = [None] * 17
         self.intervals = [None] * 17
         self.next_call = [None] * 17
@@ -39,8 +39,10 @@ class slow_test:
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Initializing slow measurement...')
             self.Tk_output.write('++++++++++++++++++++++++++++++++')
-        #for sample in self.sample_list:
-            #self.box.Set_Sample(sample)
+        for sample in self.sample_list:
+            if self.print_ch == 'Tk':
+                self.Tk_status.write('Setting up sample %i' % sample)
+            self.box.Set_Sample(sample)
         for sample in range(1,17):
             self.time_queue[sample].clear()
             self.result_queue[sample].clear()
@@ -56,6 +58,8 @@ class slow_test:
             self.next_call[sample] = self.scheduler.enter(0,1,self.do_one_measurement,(sample,)) #3
         if self.intervals[sample] == None:
             self.intervals[sample] = self.default_interval #4
+        if self.print_ch == 'Tk':
+            self.Tk_status.write('Sample %i added' % sample)
     
     def remove_one_from_measurement(self, sample):
         if self.next_call[sample] != None:
@@ -65,6 +69,8 @@ class slow_test:
         self.time_queue[sample].clear()
         self.result_queue[sample].clear()
         self.sample_list.remove(sample) #1
+        if self.print_ch == 'Tk':
+            self.Tk_status.write('Sample %i removed' % sample)
     
     def do_one_measurement(self, sample):
         # stop measurement
@@ -107,16 +113,16 @@ class slow_test:
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Measuring sample %i...' % sample)
         try:
-            #self.box.Set_Sample(sample)
-            #result = self.box.Read(sample)
-            time.sleep(self.wait_time)
-            result = float(time.time())
+            self.box.Set_Sample(sample)
+            CH1,CH2 = self.box.Read(sample)
+            #time.sleep(self.wait_time)
+            #result = float(time.time())
             t = float(time.clock()-self.t0)
             timestamp = datetime.now()
-            line = "Sample %i: t = %s, v = %s (%s)" % (sample,t,result,timestamp.time())
+            line = "Sample %i: t = %g, v = %g,%g (%s)" % (sample,t,CH1,CH2,timestamp.time())
             if self.print_ch == 'console': print line
             elif self.print_ch == 'Tk': self.Tk_output.write(line)
-            self.output_files[sample].write("%s\t%s\t%s\n" % (t,result,timestamp))
+            self.output_files[sample].write("%g\t%g\t%g\t%s\n" % (t,CH1,CH2,timestamp))
             self.output_files[sample].flush()
         except:
             self._to_stop = True
@@ -124,14 +130,15 @@ class slow_test:
         
         # auto_tc
         self.time_queue[sample].append(t)
-        self.result_queue[sample].append(result)
+        self.result_queue[sample].append(CH1)
         if len(self.time_queue[sample]) > 5:
             self.time_queue[sample].popleft()
             self.result_queue[sample].popleft()
             if self._auto_tc and self.intervals[sample] < MAX_SLOW_INTERVAL:
                 slope, intersect = numpy.polyfit(self.time_queue[sample],self.result_queue[sample],1)
-                new_interval = abs(result * 0.00001 / slope)
-                self.intervals[sample] = max(self.intervals[sample], min(new_interval,MAX_SLOW_INTERVAL))
+                new_interval = min(abs(CH1 * 0.00001 / slope), MAX_SLOW_INTERVAL)
+                if new_interval > self.intervals[sample]:
+                    self.intervals[sample] = min(self.intervals[sample] * 1.05, new_interval)
         
         # wait for next
         if self.print_ch == 'Tk':
@@ -165,7 +172,7 @@ class slow_test:
 
 if __name__ == "__main__":
     logging.basicConfig(filename = 'slow_test_errors.log', level=logging.ERROR)
-    test = slow_test(set([2,3,4]), "GPIB1::11::INSTR", INTERVAL = 15)
+    test = slow_test(set([2,3,4]), "GPIB0::11::INSTR", INTERVAL = 15)
     test.initialize()
     test._to_stop = False
     test.main_test_loop()
