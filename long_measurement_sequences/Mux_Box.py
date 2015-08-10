@@ -1,5 +1,5 @@
 from datetime import datetime
-import visa
+import visa_test
 import time
 
 RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
@@ -9,12 +9,22 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
 
 class Mux_Box:
     def __init__(self, device_addr, stablize_time = 3):
-        rm = visa.ResourceManager();
+        rm = visa_test.ResourceManager();
         self.device = rm.open_resource(device_addr);
+        self.device.timeout = 1000
         self.sensitivity = {}
         self.wait = stablize_time # in sec
         self.last_sense = -1
         
+        while True:
+            try:
+                self.device.read()
+            except:
+                break
+    
+    def Set_Freq(self, freq):
+        self.device.write("FREQ %f" % freq)
+            
     def Set_Sample(self, idx):
         for i in range(4):
             self.device.write("AUXV %i,%.3f" % (i+1, 5 if (idx-1) & (1<<i) else 0))
@@ -25,7 +35,7 @@ class Mux_Box:
                 self.last_sense = self.sensitivity[idx]
             time.sleep(self.wait)
         else:
-            self.sensitivity[idx] = self.find_range()
+            self.sensitivity[idx] = self.last_sense
         
     def Read(self, idx):
         # take data

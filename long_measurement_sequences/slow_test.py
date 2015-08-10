@@ -10,7 +10,7 @@ from Mux_Box import Mux_Box
 MAX_SLOW_INTERVAL = 60
 
 class slow_test:
-    def __init__(self, sample_list, lock_in_addr, INTERVAL = 60, WAIT_TIME = 3, testname = 'longlong_slow',
+    def __init__(self, sample_list, lock_in_addr, INTERVAL = 60, WAIT_TIME = 3, FREQ = 1.3, testname = 'longlong_slow',
                  print_ch = 'console', Tk_output = None, Tk_status = None):
         self.name_prefix = testname
         self.sample_list = set(sample_list)
@@ -21,6 +21,7 @@ class slow_test:
         self.intervals = [None] * 17
         self.next_call = [None] * 17
         self.idx_to_ignore = 0
+        self.freq = FREQ
         
         self.print_ch = print_ch
         self.Tk_output = Tk_output
@@ -39,6 +40,7 @@ class slow_test:
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Initializing slow measurement...')
             self.Tk_output.write('++++++++++++++++++++++++++++++++')
+        self.box.Set_Freq(self.freq)
         for sample in self.sample_list:
             if self.print_ch == 'Tk':
                 self.Tk_status.write('Setting up sample %i' % sample)
@@ -145,6 +147,7 @@ class slow_test:
             self.Tk_status.write('Waiting for next query in queue...')
 
     def main_test_loop(self):
+        self.initialize()
         if self.print_ch == 'console':
             print 'Slow measurement running...'
         elif self.print_ch == 'Tk':
