@@ -1,6 +1,6 @@
 from datetime import datetime
 import time
-import visa_test
+import visa
 from collections import deque
 import numpy
 import math
@@ -21,7 +21,7 @@ class fast_test:
         self.TESTNAME = testname
         self.interval = INTERVAL #in sec
         self.freq = init_freq
-        rm = visa_test.ResourceManager();
+        rm = visa.ResourceManager();
         self.lockin = rm.open_resource(lock_in_addr);
         self.lockin.timeout = 1000
         self.print_ch = print_ch
@@ -83,7 +83,7 @@ class fast_test:
         # auto tc and freq
         self.time_queue.append(t)
         self.result_queue.append(CH1)
-        if len(self.time_queue) > 5:
+        if len(self.time_queue) > 100:
             self.time_queue.popleft()
             self.result_queue.popleft()
             if self._auto_tc and self.interval < MAX_FAST_INTERVAL:
@@ -98,6 +98,8 @@ class fast_test:
                     self.lockin.write("FREQ %f" % self.freq)
             
                 self.Tk_status.write('interval is %g, freq is %g, tau is %gs' % (self.interval,self.freq,tau))
+        else:
+            self.Tk_status.write('interval is %g, freq is %g, tau is unknown' % (self.interval,self.freq))
         
         # auto sense
         if self.interval > 0.5:

@@ -90,8 +90,6 @@ class fast_frame(Tkinter.Frame):
             self.test.sample_no = int(self.sample_select_Variable.get())
             self.parent_fast_sample_Variable.set(self.sample_select_Variable.get()) #6
             self.test.interval = float(self.initial_interval_Variable.get())
-            if self.freq_Entry.get() == '':
-                self.freq_Entry.insert(0,'43')
             self.test.freq = float(self.freq_Entry.get())
             #self.test.initialize()
             self.test_thread = threading.Thread(target = self.test.main_test_loop)
@@ -115,7 +113,7 @@ class fast_frame(Tkinter.Frame):
         
     def EntryValidate(self, P):
         # Disallow anything but float number
-        valid = bool(re.match(r'^\d*\.?\d*$',P))
+        valid = bool(re.match(r'^\d\.?\d*$',P))
         if not valid:
             self.bell()
         return valid
@@ -205,8 +203,6 @@ class slow_frame(Tkinter.Frame):
             self.test._to_stop = False #4
             self.is_running = True #5
             self.freq_Entry.configure(state='disabled') #6
-            if self.slow_freq_Variable.get() == '':
-                self.slow_freq_Variable.set('1.3')
             self.test.freq = float(self.slow_freq_Variable.get())
             #self.test.initialize()
             self.test_thread = threading.Thread(target = self.test.main_test_loop)
@@ -246,7 +242,7 @@ class slow_frame(Tkinter.Frame):
         
     def EntryValidate(self, P):
         # Disallow anything but float number
-        valid = bool(re.match(r'^\d*\.?\d*$',P))
+        valid = bool(re.match(r'^\d\.?\d*$',P))
         if not valid:
             self.bell()
         return valid

@@ -1,5 +1,5 @@
 from datetime import datetime
-import visa_test
+import visa
 import time
 
 RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
@@ -9,7 +9,7 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
 
 class Mux_Box:
     def __init__(self, device_addr, stablize_time = 3):
-        rm = visa_test.ResourceManager();
+        rm = visa.ResourceManager();
         self.device = rm.open_resource(device_addr);
         self.device.timeout = 1000
         self.sensitivity = {}

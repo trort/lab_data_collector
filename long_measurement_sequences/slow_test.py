@@ -129,11 +129,12 @@ class slow_test:
         except:
             self._to_stop = True
             logging.exception('Stopped when trying to measure %i at %s' % (sample, datetime.now()))
+            return
         
         # auto_tc
         self.time_queue[sample].append(t)
         self.result_queue[sample].append(CH1)
-        if len(self.time_queue[sample]) > 5:
+        if len(self.time_queue[sample]) > 20:
             self.time_queue[sample].popleft()
             self.result_queue[sample].popleft()
             if self._auto_tc and self.intervals[sample] < MAX_SLOW_INTERVAL:
