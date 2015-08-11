@@ -44,10 +44,11 @@ class fast_test:
         elif self.print_ch == 'Tk':
             self.Tk_status.write('Initializing fast measurement...')
             self.Tk_output.write('++++++++++++++++++++++++++++++++')
+        self.lockin.write("FREQ %f" % self.freq)
+        time.sleep(2)
         FILENAME = ('%s_sample%i_%s.txt' % (self.TESTNAME, self.sample_no, str(datetime.now()).replace(':','-')))
         self.output = open(FILENAME,'a')
         self.output.write('t\tCH1\tCH2\tfreq\ttimestamp\n')
-        self.lockin.write("FREQ %f" % self.freq)
         
         self.time_queue.clear()
         self.result_queue.clear()
@@ -86,15 +87,15 @@ class fast_test:
         if len(self.time_queue) > 100:
             self.time_queue.popleft()
             self.result_queue.popleft()
-            if self._auto_tc and self.interval < MAX_FAST_INTERVAL:
+            if self._auto_tc and (self.interval < MAX_FAST_INTERVAL or self.freq > MAX_FAST_FREQ):
                 slope, intersect = numpy.polyfit(self.time_queue,self.result_queue,1)
                 tau = CH1 / slope
                 new_interval = min(abs(tau * 0.00001),MAX_FAST_INTERVAL)
                 if new_interval > self.interval:
-                    self.interval = min(self.interval * 1.02, new_interval)
+                    self.interval = min(self.interval * 1.005, new_interval)
                 new_freq = max(5 / self.interval, MAX_FAST_FREQ)
                 if new_freq < self.freq: #change freq
-                    self.freq = max(self.freq * 0.98, new_freq)
+                    self.freq = max(self.freq * 0.995, new_freq)
                     self.lockin.write("FREQ %f" % self.freq)
             
                 self.Tk_status.write('interval is %g, freq is %g, tau is %gs' % (self.interval,self.freq,tau))

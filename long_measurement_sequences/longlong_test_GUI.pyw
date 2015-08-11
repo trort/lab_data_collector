@@ -3,6 +3,7 @@ import ttk
 import threading
 import logging
 import re
+import time
 
 import thread_safe_tk_widgets
 import fast_test
@@ -175,6 +176,9 @@ class slow_frame(Tkinter.Frame):
         self.auto_tc_Var.set(1)
         auto_tc_button = Tkinter.Checkbutton(self, text='Auto interval', variable=self.auto_tc_Var)
         auto_tc_button.grid(column=3,row=5,sticky='W')
+
+        self.time_Label = Tkinter.Label(self, text = "Current time:\nNot running")
+        self.time_Label.grid(column=4,row=5,columnspan=2,sticky='W')
         
         self.start_button_Variable = Tkinter.StringVar()
         self.start_button = ttk.Button(self,textvariable=self.start_button_Variable,command=self.OnButtonClick)
@@ -192,6 +196,7 @@ class slow_frame(Tkinter.Frame):
         self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)
         self.auto_tc_Var.trace('w',self.OnAutoTcChange)
         self.is_running = False
+        self.UpdateTimeLabel()
         
     def OnButtonClick(self):
         self.start_button.state(['disabled'])
@@ -246,6 +251,13 @@ class slow_frame(Tkinter.Frame):
         if not valid:
             self.bell()
         return valid
+
+    def UpdateTimeLabel(self):
+        if self.test.t0 == None:
+            self.time_Label.configure(text='Current time:\nNot Running')
+        else:
+            self.time_Label.configure(text='Current time:\n%fs'%(time.clock()-self.test.t0))
+        self.parent.after(1000,self.UpdateTimeLabel)
             
 class main_window(Tkinter.Tk):
     def __init__(self, parent):

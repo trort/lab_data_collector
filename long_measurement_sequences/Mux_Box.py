@@ -14,13 +14,14 @@ class Mux_Box:
         self.device.timeout = 1000
         self.sensitivity = {}
         self.wait = stablize_time # in sec
-        self.last_sense = -1
         
         while True:
             try:
                 self.device.read()
             except:
                 break
+
+        self.last_sense = int(self.device.ask('SENS?'))
     
     def Set_Freq(self, freq):
         self.device.write("FREQ %f" % freq)

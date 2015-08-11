@@ -7,7 +7,7 @@ import sched
 
 from Mux_Box import Mux_Box
 
-MAX_SLOW_INTERVAL = 60
+MAX_SLOW_INTERVAL = 600
 
 class slow_test:
     def __init__(self, sample_list, lock_in_addr, INTERVAL = 60, WAIT_TIME = 3, FREQ = 1.3, testname = 'longlong_slow',
@@ -22,6 +22,7 @@ class slow_test:
         self.next_call = [None] * 17
         self.idx_to_ignore = 0
         self.freq = FREQ
+        self.t0 = None
         
         self.print_ch = print_ch
         self.Tk_output = Tk_output
@@ -170,6 +171,7 @@ class slow_test:
                 self.output_files[sample].flush()
                 self.output_files[sample].close()
                 self.output_files[sample] = None #2
+        self.t0 = None
         if self.print_ch == 'Tk':
             self.Tk_status.write('Idle...')
             self.Tk_output.write('===============================')
