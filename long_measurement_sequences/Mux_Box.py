@@ -8,14 +8,24 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
                20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1]
 
 class Mux_Box:
-    def __init__(self, device, interval = 60, stablize_time = 3):
-        self.device = device
+    def __init__(self, device_addr, stablize_time = 3):
+        rm = visa.ResourceManager();
+        self.device = rm.open_resource(device_addr);
+        self.device.timeout = 1000
         self.sensitivity = {}
         self.wait = stablize_time # in sec
-        self.interval = interval
-        self.next_call = {}
-        self.last_sense = -1
         
+        while True:
+            try:
+                self.device.read()
+            except:
+                break
+
+        self.last_sense = int(self.device.ask('SENS?'))
+    
+    def Set_Freq(self, freq):
+        self.device.write("FREQ %f" % freq)
+            
     def Set_Sample(self, idx):
         for i in range(4):
             self.device.write("AUXV %i,%.3f" % (i+1, 5 if (idx-1) & (1<<i) else 0))
@@ -26,20 +36,12 @@ class Mux_Box:
                 self.last_sense = self.sensitivity[idx]
             time.sleep(self.wait)
         else:
-            self.sensitivity[idx] = self.find_range()
+            self.sensitivity[idx] = self.last_sense
         
     def Read(self, idx):
-        # set delay time between points
-        if idx in self.next_call:
-            time.sleep(max(0, self.next_call[idx] - time.time()))
-        else:
-            #time.sleep(self.wait)
-            self.next_call[idx] = time.time()
-        self.next_call[idx] = max(self.next_call[idx] + self.interval, time.time())
-        
         # take data
-        [a,b] = self.device.ask("SNAP?1,2").strip().split(',')
-        line = a + "\t" + b
+        a,b = self.device.ask("SNAP?1,2").strip().split(',')
+        #line = a + "\t" + b
         
         ## adjust range
         sense_range = RANGE_TABLE[self.sensitivity[idx]]
@@ -48,7 +50,7 @@ class Mux_Box:
         elif abs(float(a)) < 0.3*sense_range and self.sensitivity[idx] > 0:
             self.sensitivity[idx] -= 1
         
-        return line
+        return float(a),float(b)
 
     def find_range(self):
         if self.last_sense == -1:
