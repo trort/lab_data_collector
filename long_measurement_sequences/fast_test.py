@@ -3,7 +3,6 @@ import time
 import visa
 from collections import deque
 import numpy
-import math
 import logging
 
 MAX_FAST_INTERVAL = 3
@@ -90,12 +89,12 @@ class fast_test:
             if self._auto_tc and (self.interval < MAX_FAST_INTERVAL or self.freq > MAX_FAST_FREQ):
                 slope, intersect = numpy.polyfit(self.time_queue,self.result_queue,1)
                 tau = CH1 / slope
-                new_interval = min(abs(tau * 0.00001),MAX_FAST_INTERVAL)
+                new_interval = min(abs(tau * 0.00003),MAX_FAST_INTERVAL)
                 if new_interval > self.interval:
-                    self.interval = min(self.interval * 1.005, new_interval)
-                new_freq = max(5 / self.interval, MAX_FAST_FREQ)
+                    self.interval = min(self.interval * 1.001, new_interval)
+                new_freq = max(3 / self.interval, MAX_FAST_FREQ)
                 if new_freq < self.freq: #change freq
-                    self.freq = max(self.freq * 0.995, new_freq)
+                    self.freq = max(self.freq * 0.999, new_freq)
                     self.lockin.write("FREQ %f" % self.freq)
             
                 self.Tk_status.write('interval is %g, freq is %g, tau is %gs' % (self.interval,self.freq,tau))

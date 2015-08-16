@@ -140,7 +140,7 @@ class slow_test:
             self.result_queue[sample].popleft()
             if self._auto_tc and self.intervals[sample] < MAX_SLOW_INTERVAL:
                 slope, intersect = numpy.polyfit(self.time_queue[sample],self.result_queue[sample],1)
-                new_interval = min(abs(CH1 * 0.00001 / slope), MAX_SLOW_INTERVAL)
+                new_interval = min(abs(CH1 * 0.0001 / slope), MAX_SLOW_INTERVAL)
                 if new_interval > self.intervals[sample]:
                     self.intervals[sample] = min(self.intervals[sample] * 1.05, new_interval)
         

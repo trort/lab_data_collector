@@ -1,5 +1,6 @@
 import Tkinter
 import ttk
+import tkMessageBox
 import threading
 import logging
 import re
@@ -274,7 +275,10 @@ class main_window(Tkinter.Tk):
         self.right_frame.grid(row=0, column=1)
         self.title('Multiplexer Measurements')
         self.resizable(False,False)
+        self.lift()
+        self.focus_force()
         
+        self.protocol("WM_DELETE_WINDOW", self.OnClosingWindow)
         self.fast_sample_Variable.trace('w',self.OnFastSampleChange)
         self.slow_freq_Variable.trace('w',self.OnSlowFreqChange)
         
@@ -283,6 +287,13 @@ class main_window(Tkinter.Tk):
         
     def OnSlowFreqChange(self,*args):
         self.left_frame.test.SLOW_FREQ = float(self.slow_freq_Variable.get())
+        
+    def OnClosingWindow(self):
+        if self.left_frame.is_running or self.right_frame.is_running:
+            tkMessageBox.showerror("Error","Measurement still running")
+        else:
+            if tkMessageBox.askokcancel("Quit", "Do you want to quit?"):
+                root.destroy()
 
 if __name__ == "__main__":
     logging.basicConfig(filename = 'window_errors.log', level=logging.WARNING)
