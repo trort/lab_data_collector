@@ -192,6 +192,7 @@ class slow_frame(Tkinter.Frame):
         # logic part
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
         self.test = slow_test.slow_test(initial_sample_list, SLOW_LOCKIN, FREQ = float(self.slow_freq_Variable.get()), print_ch = 'Tk',
+                                        INTERVAL = float(self.initial_interval_Variable.get()), WAIT_TIME = float(self.wait_time_Variable.get()),
                                         Tk_output = self.output_box, Tk_status = self.status_bar)
         self.wait_time_Variable.trace('w',self.OnWaitTimeChange)
         self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)

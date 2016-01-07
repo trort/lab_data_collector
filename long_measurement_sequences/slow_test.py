@@ -171,6 +171,9 @@ class slow_test:
                 self.output_files[sample].flush()
                 self.output_files[sample].close()
                 self.output_files[sample] = None #2
+        for sample in range(1,17):
+            if self.intervals[sample] != None:
+                self.intervals[sample] = None
         self.t0 = None
         if self.print_ch == 'Tk':
             self.Tk_status.write('Idle...')
