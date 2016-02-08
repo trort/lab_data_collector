@@ -1,5 +1,6 @@
+﻿# -*- coding: utf-8-sig -*-
 from datetime import datetime
-import visa
+import visa_test as visa
 import time
 
 RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
@@ -8,7 +9,7 @@ RANGE_TABLE = [2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
                20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1]
 
 class Mux_Box:
-    def __init__(self, device_addr, stablize_time = 3):
+    def __init__(self, device_addr, DMM_addr = None, stablize_time = 3):
         rm = visa.ResourceManager();
         self.device = rm.open_resource(device_addr);
         self.device.timeout = 1000
@@ -22,9 +23,22 @@ class Mux_Box:
                 break
 
         self.last_sense = int(self.device.ask('SENS?'))
+
+        # DMM setup
+        self.DMM = rm.open_resource(DMM_addr);
+        self.DMM.write(":CONF:FRES")
+        self.DMM.write(":FRES:RANG:6e3")
     
     def Set_Freq(self, freq):
         self.device.write("FREQ %f" % freq)
+
+    def Read_temp(self):
+        # for some reason, need to repeat the following 2 lines every time to recover from bad measurement data
+        self.DMM.write(":CONF:FRES")
+        self.DMM.write(":FRES:RANG:6e3")
+        res = float(self.DMM.ask(":READ?").strip())
+        temp = ((res - 1000)/39.03) * 10
+        return temp
             
     def Set_Sample(self, idx):
         for i in range(4):

@@ -12,6 +12,7 @@ import slow_test
 
 FAST_LOCKIN = "GPIB0::9::INSTR"
 SLOW_LOCKIN = "GPIB0::11::INSTR"
+DMM = "GPIB0::16::INSTR"
 
 class fast_frame(Tkinter.Frame):
     def __init__(self, parent, fast_sample_Variable):
@@ -192,7 +193,8 @@ class slow_frame(Tkinter.Frame):
         # logic part
         initial_sample_list = set([i for i in range(1,17) if int(self.selected_Var[i].get())==1])
         self.test = slow_test.slow_test(initial_sample_list, SLOW_LOCKIN, FREQ = float(self.slow_freq_Variable.get()), print_ch = 'Tk',
-                                        Tk_output = self.output_box, Tk_status = self.status_bar)
+                                        INTERVAL = float(self.initial_interval_Variable.get()), WAIT_TIME = float(self.wait_time_Variable.get()),
+                                        Tk_output = self.output_box, Tk_status = self.status_bar, DMM_addr = DMM)
         self.wait_time_Variable.trace('w',self.OnWaitTimeChange)
         self.initial_interval_Variable.trace('w',self.OnInitialInvervalChange)
         self.auto_tc_Var.trace('w',self.OnAutoTcChange)

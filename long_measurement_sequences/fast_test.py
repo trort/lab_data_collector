@@ -1,6 +1,7 @@
+﻿# -*- coding: utf-8-sig -*-
 from datetime import datetime
 import time
-import visa
+import visa_test as visa
 from collections import deque
 import numpy
 import logging

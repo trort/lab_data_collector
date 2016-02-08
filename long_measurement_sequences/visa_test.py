@@ -1,4 +1,4 @@
-import time
+﻿import time
 
 class TimeOutError(Exception):
     def __init__(self, value):
@@ -16,6 +16,7 @@ class Device:
         self.t0 = time.clock();
         
     def ask(self, cmd):
+        # as lock-in
         if cmd == 'FREQ?': return str(self.freq)
         if cmd == 'SENS?': return str(self.sense)
         
@@ -26,6 +27,9 @@ class Device:
             return str(CH1)
         if cmd == 'SNAP?1,2':
             return '%f,%f' % (CH1,CH2)
+
+        # as DMM
+        if cmd == ':READ?': return str("1.109E3")
         
     def write(self, cmd):
         if cmd.startswith('FREQ '):
