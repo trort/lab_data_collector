@@ -25,7 +25,7 @@
 ":CONF:FREQ"					// set as frequency meter
 ":CONF:TEMP"					// set as temperature meter
 ":READ?"					// get screen reading
-":FRES:RANG:6e3"				// setup measurement range, just estimate a largest value and device will select
+":FRES:RANG 6e3"				// setup measurement range, just estimate a largest value and device will select
 
 *****Keithley 230 voltage source*****
 "I" + str(I_LIMIT) + "X"		// set current limit

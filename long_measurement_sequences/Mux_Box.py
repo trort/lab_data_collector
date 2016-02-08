@@ -27,15 +27,12 @@ class Mux_Box:
         # DMM setup
         self.DMM = rm.open_resource(DMM_addr);
         self.DMM.write(":CONF:FRES")
-        self.DMM.write(":FRES:RANG:6e3")
+        self.DMM.write(":FRES:RANG 6e3")
     
     def Set_Freq(self, freq):
         self.device.write("FREQ %f" % freq)
 
     def Read_temp(self):
-        # for some reason, need to repeat the following 2 lines every time to recover from bad measurement data
-        self.DMM.write(":CONF:FRES")
-        self.DMM.write(":FRES:RANG:6e3")
         res = float(self.DMM.ask(":READ?").strip())
         temp = ((res - 1000)/39.03) * 10
         return temp
