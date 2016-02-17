@@ -93,12 +93,12 @@ class fast_test:
                 new_interval = min(abs(tau * 0.00003),MAX_FAST_INTERVAL)
                 if new_interval > self.interval:
                     self.interval = min(self.interval * 1.001, new_interval)
-                new_freq = max(3 / self.interval, MAX_FAST_FREQ)
-                if new_freq < self.freq: #change freq
-                    self.freq = max(self.freq * 0.999, new_freq)
-                    self.lockin.write("FREQ %f" % self.freq)
+                # new_freq = max(3 / self.interval, MAX_FAST_FREQ)
+                # if new_freq < self.freq: #change freq
+                #     self.freq = max(self.freq * 0.999, new_freq)
+                #     self.lockin.write("FREQ %f" % self.freq)
             
-                self.Tk_status.write('interval is %g, freq is %g, tau is %gs' % (self.interval,self.freq,tau))
+            self.Tk_status.write('interval is %g, freq is %g, tau is %gs' % (self.interval,self.freq,tau))
         else:
             self.Tk_status.write('interval is %g, freq is %g, tau is unknown' % (self.interval,self.freq))
         
