@@ -12,10 +12,10 @@ STEP = 0.1;
 INTERVAL = 0.5; #in sec
 #lockin = visa.instrument("GPIB0::8");
 
-output = open(FILENAME,"w");
+output = open(FILENAME,"a");
 t0 = time.clock();
 
-def init():
+def Init():
     #device.write("smua.reset()");
     device.write("smua.source.limiti = " + str(I_LIMIT));
 
