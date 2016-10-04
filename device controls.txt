@@ -4,8 +4,8 @@
 *****Keithley 2612 sourcemeter*****
 // smua stands for channel A
 "smua.source.limiti = " + str(I_LIMIT)		// set current limit
-"smua.source.levelv = " + str(v)		// set voltage level
-"print(smua.measure.i())"			// measure current
+"smua.source.levelv = " + str(v)			// set voltage level
+"print(smua.measure.i())"					// measure current
 
 *****SRS 830 lock-in*****
 "OUTP ? 1"					// read channel 1
@@ -13,20 +13,24 @@
 // for using of the buffer, check "locking_buffer.py"
 
 *****Keithley 2400 sourcemeter*****
-":SOUR:FUNC CURR"				// set as current source
+":SOUR:FUNC CURR"						// set as current source
 ":SENS:VOLT:PROT " + str(V_LIMIT)		// set voltage limit
 ":SOUR:CURR:LEV " + str(I_LEVEL)		// set current level
 
 *****Keithley 2000 multimeter*****
-":CONF:RES"					// set as 2 wire Ohm meter
+":CONF:RES"						// set as 2 wire Ohm meter
 ":CONF:FRES"					// set as 4 wire Ohm meter
 ":CONF:VOLT:DC"					// set as DC voltage meter
 ":CONF:CURR:AC"					// set as AC current meter
 ":CONF:FREQ"					// set as frequency meter
 ":CONF:TEMP"					// set as temperature meter
-":READ?"					// get screen reading
+":READ?"						// get screen reading
 ":FRES:RANG 6e3"				// setup measurement range, just estimate a largest value and device will select
 
 *****Keithley 230 voltage source*****
 "I" + str(I_LIMIT) + "X"		// set current limit
-"V" + str(v) + "X"		// set voltage level
+"V" + str(v) + "X"				// set voltage level
+
+*****Agilent E3631 DC voltage source*****
+"OUTPut:STATe ON"				// turn on output
+"OUTPut:STATe OFF"				// turn off output

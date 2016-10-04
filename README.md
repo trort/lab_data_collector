@@ -11,6 +11,7 @@ This folder includes:
 * `bin_verify.py` Just verifies the binary mode functions of `lockin_buffer.py` by comparing the data transfered with the binary mode and ASCII mode.
 * `cycled.py` Used to measure the repeated transient when LED is turned on and off repeatedly with fixed intervals. 
 * `auto_cycle.py` Also used for measurements when LED is turned on and off repeatedly, but not with fixed time intervals. LED is toggled when the measured value reaches the threshold maximum or minimum.
+* `Vth_sweep.py` Measures the threshold voltage (Vth) shift in a transistor during photo-illumination and dark relaxation
 
 The text file `device controls.txt` contains the common GPIB commands for all data collection instruments in our lab. Use this file to create script for new measurements.
 
